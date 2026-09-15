@@ -1,0 +1,96 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "robust-spatiotemporal-deepfake-detection"
+version = "0.1.0"
+description = "Research pipeline for robust, uncertainty-aware deepfake-video detection."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy>=2.2,<3",
+    "opencv-python-headless>=4.11,<5",
+    "pandas>=2.2,<3",
+    "pillow>=11,<13",
+    "python-dotenv>=1.1,<2",
+    "pyyaml>=6,<7",
+    "scikit-learn>=1.6,<2",
+    "scipy>=1.15,<2",
+    "tqdm>=4.67,<5",
+]
+
+[project.optional-dependencies]
+cpu = [
+    "torch==2.13.0",
+    "torchvision==0.28.0",
+]
+cu130 = [
+    "torch==2.13.0",
+    "torchvision==0.28.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15,<2",
+    "pytest>=8.3,<10",
+    "pytest-cov>=6,<8",
+    "ruff>=0.11,<1",
+    "types-pyyaml>=6,<7",
+]
+
+[tool.uv]
+required-version = "==0.12.13"
+conflicts = [
+    [
+        { extra = "cpu" },
+        { extra = "cu130" },
+    ],
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "cu130" },
+]
+torchvision = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "cu130" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/robust_deepfake_detection"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers -ra"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["robust_deepfake_detection"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["robust_deepfake_detection"]
