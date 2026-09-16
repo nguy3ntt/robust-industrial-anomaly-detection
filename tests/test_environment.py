@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from robust_deepfake_detection.environment import Check, EnvironmentReport
+from robust_industrial_anomaly_detection.environment import Check, EnvironmentReport
 
 
 def test_report_is_ready_when_it_has_no_failures() -> None:

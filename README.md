@@ -1,145 +1,139 @@
-# Robust Spatiotemporal Deepfake Detection
+# Robust Industrial Anomaly Detection
 
-Research and prototype development for deepfake video detection that remains reliable under unseen manipulation methods, video compression, resizing, re-encoding, and other distribution shifts.
+A reproducible research and portfolio project for detecting and localizing
+visual manufacturing defects when only normal training images are available.
+The central question is not merely whether a model works on a familiar test
+set, but whether its scores and explanations remain useful under realistic
+changes in lighting, scale, blur, compression, and object category.
 
-## Project objective
+## What the system will do
 
-The project will develop an explainable, uncertainty-aware detector that combines spatial, frequency-domain, and temporal evidence. Its main contribution is not simply higher in-dataset accuracy: it will test whether a model can generalize to manipulations and post-processing operations that were absent during training.
+Given an inspection image, the completed prototype will provide:
 
-The intended output is a reproducible research pipeline and a practical media-forensics interface that reports:
+- an image-level anomaly score;
+- a pixel-level heatmap showing suspicious regions;
+- a three-way recommendation: normal, anomalous, or send for human review;
+- uncertainty and a stated operating threshold;
+- robustness results for common image-quality and capture shifts;
+- transparent limitations rather than a claim of guaranteed product quality.
 
-- whether a video contains evidence of facial manipulation;
-- calibrated confidence and an option to abstain when evidence is insufficient;
-- spatial regions and temporal segments influencing the result;
-- robustness results for compression, resizing, blur, noise, and re-encoding;
-- a clear statement that the output is decision support, not proof of authenticity.
+This is an inspection decision-support system. It is not a certified quality
+control device and it does not diagnose the physical root cause of a defect.
 
 ## Research questions
 
-1. Does combining spatial, frequency, and temporal evidence improve cross-dataset and unseen-manipulation generalization?
-2. Which signal families remain reliable after common social-media transformations?
-3. Can calibration and selective prediction reduce confident errors on out-of-distribution videos?
-4. Do localization explanations remain stable under compression and perturbation?
-5. What accuracy, latency, and memory trade-offs are required for a practical forensic screening tool?
+1. Which pretrained feature representations produce the strongest normal-only
+   anomaly baseline on VisA?
+2. How much do anomaly ranking, localization, and false-positive control degrade
+   under realistic capture and post-processing shifts?
+3. Can normal-only score calibration provide useful false-alarm guarantees and
+   a safer human-review region without labelled validation defects?
+4. Which explanations remain spatially stable under benign transformations?
+5. How well do unified and category-specific models transfer to unseen object
+   categories, and what accuracy/latency trade-off is practical on one GPU?
 
-## Proposed method
+## Dataset
 
-The initial architecture has three branches:
+The primary source is Amazon's [Visual Anomaly (VisA) dataset](https://github.com/amazon-science/spot-diff):
 
-1. **Spatial branch:** a pretrained image or video encoder operating on sampled face crops and contextual frames.
-2. **Frequency branch:** learnable features derived from DCT or FFT representations to capture synthesis and blending artifacts.
-3. **Temporal branch:** a lightweight temporal transformer or sequence model that detects inconsistent motion and frame-to-frame artifacts.
+- 10,821 high-resolution colour images;
+- 9,621 normal and 1,200 anomalous samples;
+- 12 object categories across three broad object types;
+- image-level labels and pixel-level anomaly masks;
+- a public direct download with no account, cloud setup, or academic adviser;
+- released under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
-The fused representation will feed four heads:
+The project preserves the official one-class test split. Validation is derived
+only from official training-normal images, so test defects remain unavailable
+for model selection. See the [dataset card](docs/datasets/VISA.md),
+[governance gate](docs/datasets/GOVERNANCE.md), and
+[manifest contract](docs/MANIFESTS.md).
 
-- real/manipulated classification;
-- manipulation-region localization;
-- calibrated uncertainty estimation;
-- optional manipulation-family classification for analysis.
+## Planned method
 
-The research will begin with simple, reproducible baselines before adding each branch. Every added component must be justified by an ablation study.
+Work proceeds from auditable baselines to measured additions:
 
-## Dataset plan
+1. colour/statistical and pretrained global-feature sanity baselines;
+2. a patch-memory baseline in the PatchCore/nearest-neighbour family;
+3. multi-scale spatial features for image scoring and defect localization;
+4. robustness interventions selected by controlled ablation;
+5. normal-only quantile or conformal calibration and selective review;
+6. explanation-stability analysis and an efficient local demonstration.
 
-| Dataset | Primary use | Notes |
-| --- | --- | --- |
-| [DFDC Preview](https://ai.meta.com/datasets/dfdc/) | Primary baseline training and controlled evaluation | About 5,000 videos from 66 consenting actors, two face-swap methods, and provider identity/split metadata. Live access terms must be accepted. |
-| [FaceForensics++](https://github.com/ondyari/FaceForensics) | Optional future method and localization benchmark | Not selected for the initial pipeline because its application requests academic affiliation and advisor details. |
-| Another approved, method-diverse benchmark | Frozen cross-dataset evaluation | Add only after reviewing its licence, source-media provenance, and identity controls. |
+No complex model is accepted without comparison to a simpler baseline.
 
-Datasets will not be committed to Git. Each user must obtain data from the official source and accept the applicable terms.
+## Evaluation
 
-## Evaluation protocol
+Primary reporting includes image AUROC, average precision, FPR at high recall,
+pixel AUROC, pixel average precision, region-aware overlap, and per-category
+confidence intervals. Operating-point metrics include normal false-positive
+rate, anomaly recall, review coverage, and selective risk. Robustness tables
+will isolate JPEG compression, resizing, blur, noise, brightness/contrast, and
+small geometric changes. Latency, peak GPU memory, model size, and index size
+are reported with quality metrics.
 
-The project will report more than ordinary accuracy:
-
-- ROC-AUC and average precision;
-- balanced accuracy, precision, recall, F1, and confusion matrices;
-- expected calibration error, Brier score, and reliability diagrams;
-- coverage versus risk for selective prediction;
-- leave-one-manipulation-method-out performance;
-- cross-dataset performance without test-set fine-tuning;
-- degradation under compression, resizing, blur, noise, and frame-rate changes;
-- localization IoU or pointing-game accuracy when masks are available;
-- video-level latency, throughput, peak memory, and model size.
-
-Splits must be identity-disjoint where the dataset permits it. Frames from one source video must never be distributed across training and test sets.
+Pooled scores never replace per-category results. The untouched official test
+set is evaluated only after the experiment configuration is frozen.
 
 ## Repository layout
 
 ```text
-configs/       Experiment configurations
-data/          Local datasets and generated manifests (ignored by Git)
-notebooks/     Exploratory analysis only
-reports/       Public figures and research outputs
-scripts/       Dataset preparation and experiment entry points
-src/           Reusable package code
-tests/         Automated tests
+configs/       Dataset and experiment configurations
+data/          Placeholders only; real data stays outside Git
+docs/          Research specification, governance, and protocols
+notebooks/     Exploration only, never the source of production logic
+reports/       Public figures and final research outputs
+scripts/       Thin command-line entry points
+src/           Reusable typed Python package
+tests/         Focused automated verification
 ```
 
-Local project management and Codex instructions are intentionally excluded from version control.
+## Environment setup
 
-## Development environment
-
-The initial supported environment is CPython 3.12 managed by
-[`uv`](https://docs.astral.sh/uv/). Dependency versions are resolved in the
-committed lockfile, and CPU and NVIDIA CUDA 13.0 PyTorch builds are explicit,
-mutually exclusive choices.
-
-On the audited Windows workstation, keep datasets, caches, checkpoints, and run
-artifacts on the roomier D: drive rather than the source or system drives. Copy
-`.env.example` to `.env` and adjust the local paths before downloading data.
-See [the environment and resource plan](docs/ENVIRONMENT.md) for the recorded
-hardware, constraints, dependency policy, and planning timeline.
-
-After installing `uv`, create the local GPU development environment:
+The supported environment is CPython 3.12 managed by
+[`uv`](https://docs.astral.sh/uv/). CPU and CUDA 13.0 PyTorch builds are explicit
+and mutually exclusive.
 
 ```powershell
-$env:UV_CACHE_DIR = "D:\deepfake-cache\uv"
+$env:UV_CACHE_DIR = "D:\industrial-anomaly-cache\uv"
 uv sync --extra cu130 --group dev --locked
 Copy-Item .env.example .env
 uv run --extra cu130 python scripts/check_environment.py --accelerator cuda
 uv run --extra cu130 pytest
 ```
 
-For a CPU-only environment, replace every `cu130` with `cpu` and validate with
-`--accelerator cpu`. Keep the extra on `uv run` commands so synchronization does
-not remove the selected PyTorch build. FFmpeg is required before M1 processes
-videos; its detected version will be recorded with dataset and experiment
-metadata.
+Use `cpu` in place of `cu130` for a CPU-only setup. The example local paths put
+datasets, caches, and artifacts on the roomier D: drive; edit `.env` on another
+machine. Full details are in [the environment plan](docs/ENVIRONMENT.md).
 
-## Dataset governance and manifests
+## Reproducibility rules
 
-M1 provides a DFDC Preview manifest builder that preserves Meta's actor-disjoint
-test set and derives validation only from disconnected identity groups within
-the provider training set. Both identities in every swap stay together. The
-builder reconciles every metadata entry with local media, performs full-file
-SHA-256 hashing and ffprobe checks, and rejects duplicate or identity-leaking
-data. A failed audit does not publish a canonical manifest.
+- Configuration-driven runs and recorded deterministic seeds.
+- Versioned source URLs, licences, checksums, manifests, and data audits.
+- No direct model access to an unaudited raw dataset tree.
+- Frozen test protocol and no test-based tuning.
+- Saved environment, code revision, configuration, thresholds, and metrics for
+  every reportable run.
+- Public code and small reports only; datasets, checkpoints, and local outputs
+  remain outside Git.
 
-Read the [dataset governance gate](docs/datasets/GOVERNANCE.md), the
-[DFDC Preview dataset card](docs/datasets/DFDC.md), and the
-[manifest contract](docs/MANIFESTS.md) before acquiring or processing data.
-DFDC access requires the researcher to personally accept the current live
-agreement. Until the official package is acquired and a real-data audit passes,
-M1 remains active and model training is prohibited.
-
-## Planned reproducibility standard
-
-- Configuration-driven experiments.
-- Fixed, recorded random seeds.
-- Dataset checksums and versioned manifests.
-- Environment and dependency lock file.
-- Saved metrics and model-card metadata for every reported run.
-- No manual test-set selection or tuning.
-- Baselines reproduced before novel model development.
-
-## Responsible-use boundaries
-
-This system is intended for research and triage. A model score alone cannot establish that media is authentic or manipulated. Results may be affected by demographic imbalance, capture hardware, compression, editing software, and novel generation methods. The final interface must expose uncertainty and avoid presenting model output as conclusive forensic evidence.
+See [the full project specification](docs/PROJECT_SPEC.md) and
+[reproducibility standard](docs/REPRODUCIBILITY.md).
 
 ## Status
 
-M0 is complete. M1 governance, dataset cards, DFDC identity-safe splitting,
-manifest construction, and synthetic leakage tests are implemented. DFDC
-Preview access and the real-data audit remain the active external gate.
+M0 and M1 are complete. The official VisA archive was downloaded directly,
+verified against SHA-256, extracted through a traversal-safe atomic process,
+and audited across all 10,821 samples. The canonical manifest preserves the
+official test set and derives validation only from grouped training-normal
+images. M2—reproducible statistical, global-feature, and patch-memory
+baselines—is the active phase.
+
+To reproduce M1 after configuring `.env`:
+
+```powershell
+uv run --extra cu130 python scripts/prepare_visa.py --workers 8
+```
+
+The command resumes interrupted downloads, verifies the archive before
+extraction, and publishes a manifest only when every integrity gate passes.

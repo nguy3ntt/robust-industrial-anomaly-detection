@@ -2,14 +2,14 @@ version = 1
 revision = 3
 requires-python = "==3.12.*"
 resolution-markers = [
-    "extra != 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130'",
-    "sys_platform != 'darwin' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra != 'extra-40-robust-spatiotemporal-deepfake-detection-cu130'",
-    "sys_platform == 'darwin' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra != 'extra-40-robust-spatiotemporal-deepfake-detection-cu130'",
-    "extra != 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra != 'extra-40-robust-spatiotemporal-deepfake-detection-cu130'",
+    "extra != 'extra-35-robust-industrial-anomaly-detection-cpu' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130'",
+    "sys_platform != 'darwin' and extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra != 'extra-35-robust-industrial-anomaly-detection-cu130'",
+    "sys_platform == 'darwin' and extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra != 'extra-35-robust-industrial-anomaly-detection-cu130'",
+    "extra != 'extra-35-robust-industrial-anomaly-detection-cpu' and extra != 'extra-35-robust-industrial-anomaly-detection-cu130'",
 ]
 conflicts = [[
-    { package = "robust-spatiotemporal-deepfake-detection", extra = "cpu" },
-    { package = "robust-spatiotemporal-deepfake-detection", extra = "cu130" },
+    { package = "robust-industrial-anomaly-detection", extra = "cpu" },
+    { package = "robust-industrial-anomaly-detection", extra = "cu130" },
 ]]
 
 [[package]]
@@ -232,7 +232,7 @@ name = "mypy"
 version = "1.20.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "librt", marker = "platform_python_implementation != 'PyPy' or (extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130')" },
+    { name = "librt", marker = "platform_python_implementation != 'PyPy' or (extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130')" },
     { name = "mypy-extensions" },
     { name = "pathspec" },
     { name = "typing-extensions" },
@@ -558,7 +558,7 @@ name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130')" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -632,7 +632,7 @@ wheels = [
 ]
 
 [[package]]
-name = "robust-spatiotemporal-deepfake-detection"
+name = "robust-industrial-anomaly-detection"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
@@ -649,10 +649,10 @@ dependencies = [
 
 [package.optional-dependencies]
 cpu = [
-    { name = "torch", version = "2.13.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu') or (extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130')" },
-    { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu') or (extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130')" },
-    { name = "torchvision", version = "0.28.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu') or (extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130')" },
-    { name = "torchvision", version = "0.28.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu') or (extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130')" },
+    { name = "torch", version = "2.13.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-35-robust-industrial-anomaly-detection-cpu') or (extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130')" },
+    { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-35-robust-industrial-anomaly-detection-cpu') or (extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130')" },
+    { name = "torchvision", version = "0.28.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-35-robust-industrial-anomaly-detection-cpu') or (extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130')" },
+    { name = "torchvision", version = "0.28.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-35-robust-industrial-anomaly-detection-cpu') or (extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130')" },
 ]
 cu130 = [
     { name = "torch", version = "2.13.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" } },
@@ -678,10 +678,10 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6,<7" },
     { name = "scikit-learn", specifier = ">=1.6,<2" },
     { name = "scipy", specifier = ">=1.15,<2" },
-    { name = "torch", marker = "extra == 'cpu'", specifier = "==2.13.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "robust-spatiotemporal-deepfake-detection", extra = "cpu" } },
-    { name = "torch", marker = "extra == 'cu130'", specifier = "==2.13.0", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "robust-spatiotemporal-deepfake-detection", extra = "cu130" } },
-    { name = "torchvision", marker = "extra == 'cpu'", specifier = "==0.28.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "robust-spatiotemporal-deepfake-detection", extra = "cpu" } },
-    { name = "torchvision", marker = "extra == 'cu130'", specifier = "==0.28.0", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "robust-spatiotemporal-deepfake-detection", extra = "cu130" } },
+    { name = "torch", marker = "extra == 'cpu'", specifier = "==2.13.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "robust-industrial-anomaly-detection", extra = "cpu" } },
+    { name = "torch", marker = "extra == 'cu130'", specifier = "==2.13.0", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "robust-industrial-anomaly-detection", extra = "cu130" } },
+    { name = "torchvision", marker = "extra == 'cpu'", specifier = "==0.28.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "robust-industrial-anomaly-detection", extra = "cpu" } },
+    { name = "torchvision", marker = "extra == 'cu130'", specifier = "==0.28.0", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "robust-industrial-anomaly-detection", extra = "cu130" } },
     { name = "tqdm", specifier = ">=4.67,<5" },
 ]
 provides-extras = ["cpu", "cu130"]
@@ -851,7 +851,7 @@ version = "2.13.0+cu130"
 source = { registry = "https://download.pytorch.org/whl/cu130" }
 dependencies = [
     { name = "cuda-bindings", marker = "sys_platform == 'linux'" },
-    { name = "cuda-toolkit", extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130') or (extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130')" },
+    { name = "cuda-toolkit", extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130') or (extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130')" },
     { name = "filelock" },
     { name = "fsspec" },
     { name = "jinja2" },
@@ -925,7 +925,7 @@ name = "tqdm"
 version = "4.70.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cpu' and extra == 'extra-40-robust-spatiotemporal-deepfake-detection-cu130')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-35-robust-industrial-anomaly-detection-cpu' and extra == 'extra-35-robust-industrial-anomaly-detection-cu130')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0d/ea/b2a5bd54b28a324dae8211928b2d730b6547500342c7e6c6dea08bd0a485/tqdm-4.70.1.tar.gz", hash = "sha256:cefd0eca11b2a37a3aee776544d4f4ae913f02688135b5556b8788dfa474afc4", size = 171846, upload-time = "2026-09-11T07:25:16.601Z" }
 wheels = [

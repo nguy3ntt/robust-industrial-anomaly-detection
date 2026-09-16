@@ -6,7 +6,7 @@ import argparse
 
 from dotenv import load_dotenv
 
-from robust_deepfake_detection.environment import format_report, inspect_environment
+from robust_industrial_anomaly_detection.environment import format_report, inspect_environment
 
 
 def parse_args() -> argparse.Namespace:

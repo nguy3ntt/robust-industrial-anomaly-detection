@@ -12,7 +12,6 @@ import json
 import os
 import platform
 import shutil
-import subprocess
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -65,25 +64,6 @@ def _package_check(distribution: str, module: str) -> Check:
     except (ImportError, importlib.metadata.PackageNotFoundError) as exc:
         return Check(distribution, "fail", f"not importable: {exc}")
     return Check(distribution, "pass", version)
-
-
-def _command_version(command: str) -> str | None:
-    executable = shutil.which(command)
-    if executable is None:
-        return None
-    try:
-        result = subprocess.run(
-            [executable, "-version" if command == "ffmpeg" else "--version"],
-            capture_output=True,
-            check=False,
-            encoding="utf-8",
-            errors="replace",
-            timeout=10,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return executable
-    output = (result.stdout or result.stderr).splitlines()
-    return output[0].strip() if output else executable
 
 
 def _path_check(variable: str, *, minimum_free_gib: float) -> Check:
@@ -150,7 +130,7 @@ def _torch_checks(accelerator: Literal["any", "cpu", "cuda"]) -> list[Check]:
 def inspect_environment(
     accelerator: Literal["any", "cpu", "cuda"] = "any",
 ) -> EnvironmentReport:
-    """Inspect the active interpreter, dependencies, tools, paths, and accelerator."""
+    """Inspect the interpreter, dependencies, local paths, and accelerator."""
 
     checks: list[Check] = []
     version_ok = sys.version_info[:2] == (3, 12)
@@ -168,17 +148,8 @@ def inspect_environment(
         _package_check(distribution, module) for distribution, module in REQUIRED_PACKAGES.items()
     )
     checks.extend(_torch_checks(accelerator))
-
-    ffmpeg_version = _command_version("ffmpeg")
-    checks.append(
-        Check(
-            "FFmpeg",
-            "pass" if ffmpeg_version else "warning",
-            ffmpeg_version or "not on PATH; required before M1 video inspection",
-        )
-    )
-    checks.append(_path_check("DEEPFAKE_DATA_ROOT", minimum_free_gib=100))
-    checks.append(_path_check("DEEPFAKE_ARTIFACT_ROOT", minimum_free_gib=25))
+    checks.append(_path_check("ANOMALY_DATA_ROOT", minimum_free_gib=25))
+    checks.append(_path_check("ANOMALY_ARTIFACT_ROOT", minimum_free_gib=20))
     return EnvironmentReport(tuple(checks))
 
 

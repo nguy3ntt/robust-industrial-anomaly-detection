@@ -1,54 +1,35 @@
 # Dataset governance gate
 
-No restricted dataset is eligible for training merely because files exist on
-disk. The project owner must personally accept access terms, and each acquired
-package must pass the reproducible audit before training.
+No data may enter an experiment until all applicable items below are complete.
 
-## DFDC Preview access gate
+## Source and licence
 
-1. Open the official page at <https://ai.meta.com/datasets/dfdc/> and follow its
-   access link.
-2. Read the live agreement in full and confirm it permits this non-commercial
-   portfolio/academic project. Stop if it conflicts with the intended use.
-3. Use only accurate personal and AWS account details. Do not share secret keys
-   or access URLs with Codex, Git, logs, or documentation.
-4. Record the acceptance and access dates privately in
-   `.project/DATA_ACCESS.md`; retain a local copy or hash of the accepted terms
-   where the portal permits it.
-5. Review AWS transfer/storage costs, then download the official preview package
-   to `D:\deepfake-data\dfdc-preview`.
-6. Confirm the root contains `dataset.json`, `original_videos`, `method_A`, and
-   `method_B`. Do not rearrange or rename provider files.
-7. Install FFmpeg/ffprobe from a trusted distribution and record its version.
-8. Set the real access date in `configs/data/dfdc-preview.yaml` and run the
-   manifest builder.
-9. Do not begin model development unless the audit reports `passed: true`.
+- Acquire data only from the official VisA project archive.
+- Read and record the dataset licence, version, source URL, and access date.
+- Keep the original archive unchanged until its checksum is recorded.
+- Retain the required VisA attribution in reports and demonstrations.
 
-## Required acquisition record
+## Storage and privacy
 
-Record the source and access date, selected package/object names, total files
-and bytes, provider metadata SHA-256, accepted-terms reference, download tool
-version, retries, and ffprobe version. Never record passwords, AWS access keys,
-session tokens, or private download URLs.
+- Store the archive and extracted images under `ANOMALY_DATA_ROOT`, outside Git.
+- Store checkpoints and experiment outputs under `ANOMALY_ARTIFACT_ROOT`.
+- Do not upload dataset files or model weights without explicit authorization
+  and a fresh licence review.
+- Do not mix workplace or private production images into VisA experiments
+  without a separate data-governance record.
 
-## Stop conditions
+## Split and audit
 
-Stop processing and investigate if:
+- Preserve the official one-class test set exactly.
+- Derive validation only from official training-normal images using the recorded
+  deterministic policy.
+- Detect exact and perceptual near-duplicates before training.
+- Validate all image/mask pairs and record exclusions; silent repair is forbidden.
+- Require a passing audit and matching manifest hash in every experiment.
 
-- the live terms conflict with the intended use or publication plan;
-- access belongs to another person or organization;
-- `dataset.json` is absent, unreadable, or structurally unexpected;
-- the metadata identity count is not 66;
-- media and metadata paths do not match exactly;
-- an identity occurs in both provider train and test data;
-- validation cannot be formed from disconnected provider-training identities;
-- media probing or full-file hashing fails;
-- an identity or byte-identical file crosses a derived split; or
-- the audit is rejected or does not match the manifest SHA-256.
+## Reporting
 
-## Deferred datasets
-
-FaceForensics++ remains documented but is not an active dependency. Never
-invent affiliation or advisor details. DF40 is not a clean substitute because
-much of it derives from FaceForensics++ and Celeb-DF. Any later dataset must
-receive a separate licence, provenance, consent, and leakage review.
+- Report per-category results and uncertainty, not only a pooled average.
+- Separate validation-based choices from final test reporting.
+- Record all robustness transformations and random seeds.
+- Describe the system as inspection decision support, not a quality guarantee.

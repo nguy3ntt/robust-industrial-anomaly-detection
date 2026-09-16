@@ -19,13 +19,9 @@ mlruns/
 *.onnx
 *.safetensors
 
-# Private or generated media
-*.mp4
-*.avi
-*.mov
-*.mkv
-*.webm
-*.wav
+# Scratch exports (public report figures belong under reports/)
+predictions/
+visualizations/
 
 # Python
 __pycache__/
@@ -41,6 +37,7 @@ env/
 !.env.example
 .pytest_cache/
 .test-tmp/
+.download-tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage

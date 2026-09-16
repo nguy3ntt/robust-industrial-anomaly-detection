@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it and the VisA dataset paper."
+title: "Robust Industrial Anomaly Detection"
+type: software
+version: 0.1.0
+date-released: 2026-09-15
+license: MIT
+authors:
+  - name: "Robust Industrial Anomaly Detection contributors"
+abstract: >-
+  A reproducible research pipeline for normal-only industrial visual anomaly
+  detection, localization, robustness evaluation, and selective review.
+preferred-citation:
+  type: conference-paper
+  title: "SPot-the-Difference Self-Supervised Pre-training for Anomaly Detection and Segmentation"
+  authors:
+    - family-names: Zou
+      given-names: Yang
+    - family-names: Jeong
+      given-names: Jongheon
+    - family-names: Pemula
+      given-names: Latha
+    - family-names: Zhang
+      given-names: Dongqing
+    - family-names: Dabeer
+      given-names: Onkar
+  collection-title: "European Conference on Computer Vision"
+  year: 2022
+  doi: 10.1007/978-3-031-20056-4_23

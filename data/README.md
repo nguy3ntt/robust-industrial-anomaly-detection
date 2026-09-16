@@ -1,24 +1,25 @@
 # Data setup
 
-Do not commit datasets or derived face/video files to this repository.
+Real data is never committed here. The VisA archive and extracted images belong
+under the external path configured by `ANOMALY_DATA_ROOT`.
 
-For every dataset used, record its official source, version, access date, license or terms, expected checksums, and preprocessing configuration. Each collaborator must obtain restricted datasets independently from their official distributor.
+Primary source:
 
-Planned sources:
+- [Visual Anomaly (VisA) official project](https://github.com/amazon-science/spot-diff)
+- [Direct public archive](https://amazon-visual-anomaly.s3.us-west-2.amazonaws.com/VisA_20220922.tar)
 
-- [FaceForensics++](https://github.com/ondyari/FaceForensics)
-- [Deepfake Detection Challenge](https://ai.meta.com/datasets/dfdc/)
+The direct link downloads the dataset to the computer; it does not require an
+AWS account or cloud environment. Do not manually rearrange the extracted
+folders. The M1 preparation command verifies the archive, extracts it safely,
+and builds a trusted manifest from the official `split_csv/1cls.csv` table:
 
-Generated manifests should use opaque identifiers and relative paths. Before training, verify that identities, source videos, and derived frames do not leak across splits.
+```powershell
+uv run --extra cu130 python scripts/prepare_visa.py --workers 8
+```
 
-Project governance and schema references:
+On the audited workstation, canonical outputs are stored under
+`D:/industrial-anomaly-data/manifests/visa-20220922/` and remain outside Git.
 
-- [FaceForensics++ dataset card](../docs/datasets/FACEFORENSICS_PLUS_PLUS.md)
-- [DFDC dataset card](../docs/datasets/DFDC.md)
-- [Dataset governance gate](../docs/datasets/GOVERNANCE.md)
-- [Manifest and leakage-audit specification](../docs/MANIFESTS.md)
-
-The tracked FaceForensics++ configuration deliberately contains
-`access_date: PENDING`. Replace it only after the authorized researcher obtains
-official access. Training code must load manifests through the verified
-manifest loader and require a matching audit with `passed: true`.
+Before any experiment, read the [dataset card](../docs/datasets/VISA.md),
+[governance gate](../docs/datasets/GOVERNANCE.md), and
+[manifest contract](../docs/MANIFESTS.md).
