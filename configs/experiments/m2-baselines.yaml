@@ -1,0 +1,31 @@
+experiment:
+  name: m2-baselines
+  seed: 20260915
+  image_threshold_quantile: 0.95
+  pixel_threshold_quantile: 0.995
+  bootstrap_samples: 1000
+  bootstrap_confidence: 0.95
+
+handcrafted:
+  image_size: 128
+
+frozen_resnet18:
+  weights: IMAGENET1K_V1
+  image_size: 224
+  batch_size: 32
+
+patch_memory:
+  bank_size: 2048
+  projected_dimension: 64
+  patches_per_image: 24
+  image_score_fraction: 0.01
+  gaussian_sigma: 4.0
+  pro_max_fpr: 0.30
+  pro_thresholds: 50
+
+quick:
+  train_per_category: 32
+  validation_per_category: 16
+  test_normal_per_category: 16
+  test_anomaly_per_category: 16
+  bootstrap_samples: 100

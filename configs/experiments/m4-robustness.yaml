@@ -1,0 +1,117 @@
+experiment:
+  name: m4-robustness
+  seed: 20260915
+  bootstrap_samples: 1000
+  bootstrap_confidence: 0.95
+  image_threshold_quantile: 0.95
+  pixel_threshold_quantile: 0.995
+  pro_max_fpr: 0.30
+  pro_thresholds: 30
+
+source_m3:
+  experiment_name: m3-multiscale
+  reference_variant: reference_mid_random_2048
+  candidate_variant: multiscale_coreset_512
+  image_size: 224
+  batch_size: 16
+  gaussian_sigma: 4.0
+  image_score_fraction: 0.01
+
+conditions:
+  - id: jpeg_moderate
+    family: jpeg
+    severity: 1
+    parameters: {quality: 70}
+  - id: jpeg_severe
+    family: jpeg
+    severity: 2
+    parameters: {quality: 35}
+  - id: resize_moderate
+    family: resize
+    severity: 1
+    parameters: {scale: 0.75}
+  - id: resize_severe
+    family: resize
+    severity: 2
+    parameters: {scale: 0.50}
+  - id: blur_moderate
+    family: blur
+    severity: 1
+    parameters: {sigma: 1.0}
+  - id: blur_severe
+    family: blur
+    severity: 2
+    parameters: {sigma: 2.0}
+  - id: noise_moderate
+    family: noise
+    severity: 1
+    parameters: {standard_deviation: 0.02}
+  - id: noise_severe
+    family: noise
+    severity: 2
+    parameters: {standard_deviation: 0.05}
+  - id: photometric_moderate
+    family: photometric
+    severity: 1
+    parameters: {brightness: 0.90, contrast: 0.90}
+  - id: photometric_severe
+    family: photometric
+    severity: 2
+    parameters: {brightness: 0.75, contrast: 0.75}
+  - id: geometric_moderate
+    family: geometric
+    severity: 1
+    parameters: {angle_degrees: 2.0, translate_x: 2.0, translate_y: -2.0}
+  - id: geometric_severe
+    family: geometric
+    severity: 2
+    parameters: {angle_degrees: 5.0, translate_x: 5.0, translate_y: -5.0}
+
+stability:
+  heatmap_top_fraction: 0.05
+
+transfer:
+  bank_per_source_category: 128
+
+intervention:
+  id: multiscale_augmented_coreset_512
+  bank_size: 512
+  projected_dimension: 64
+  candidate_limit: 4096
+  patches_per_view: 12
+  mild_augmentation_pool:
+    - id: augment_jpeg
+      family: jpeg
+      severity: 1
+      parameters: {quality: 85}
+    - id: augment_resize
+      family: resize
+      severity: 1
+      parameters: {scale: 0.85}
+    - id: augment_blur
+      family: blur
+      severity: 1
+      parameters: {sigma: 0.6}
+    - id: augment_noise
+      family: noise
+      severity: 1
+      parameters: {standard_deviation: 0.01}
+    - id: augment_photometric
+      family: photometric
+      severity: 1
+      parameters: {brightness: 0.95, contrast: 0.95}
+    - id: augment_geometric
+      family: geometric
+      severity: 1
+      parameters: {angle_degrees: 1.0, translate_x: 1.0, translate_y: -1.0}
+
+quick:
+  train_per_category: 24
+  validation_per_category: 12
+  test_normal_per_category: 12
+  test_anomaly_per_category: 12
+  bootstrap_samples: 100
+  pro_thresholds: 10
+  intervention_bank_size_cap: 64
+  intervention_candidate_limit_cap: 128
+  transfer_bank_per_source_category: 16

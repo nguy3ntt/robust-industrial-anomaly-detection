@@ -120,14 +120,135 @@ machine. Full details are in [the environment plan](docs/ENVIRONMENT.md).
 See [the full project specification](docs/PROJECT_SPEC.md) and
 [reproducibility standard](docs/REPRODUCIBILITY.md).
 
+## Reproduce the M2 baselines
+
+The M2 runner accepts only the trusted M1 manifest. Thresholds are frozen from
+normal validation images (95th percentile for image scores and 99.5th
+percentile for patch scores); test anomalies never select a model, threshold,
+or hyperparameter.
+
+```powershell
+# Fast end-to-end verification on one category.
+uv run --extra cpu python scripts/run_m2_baselines.py `
+  --device cpu --quick --category candle
+
+# Reportable run over all 12 categories and all three baselines.
+uv run --extra cpu python scripts/run_m2_baselines.py --device cpu
+```
+
+Use `--extra cu130 --device cuda` after installing the CUDA profile. If a run
+is interrupted, pass its directory with `--resume`; the runner refuses to
+resume if the resolved settings, manifest, audit, or checked-in configurations
+have changed.
+
+Every run stores resolved configuration, seed, environment, Git state, exact
+model-weight identity and hash, per-image predictions, per-category metrics,
+bootstrap intervals, progress, summary, and output hashes. Patch-memory runs
+also save two local qualitative panels per category (highest-scoring normal and
+anomaly), with columns `input | anomaly overlay | ground-truth mask`.
+
+The completed full VisA run produced these macro per-category means:
+
+| Baseline | Image AUROC | Image AP | Normal FPR | Pixel AUROC | Pixel AP | AUPRO@30 |
+|---|---:|---:|---:|---:|---:|---:|
+| Colour/texture NN | 0.8145 | 0.8497 | 0.0629 | — | — | — |
+| Frozen ResNet-18 global NN | 0.8227 | 0.8513 | 0.0657 | — | — | — |
+| Frozen ResNet-18 patch memory | **0.8283** | **0.8527** | **0.0477** | 0.9488 | 0.3038 | 0.7156 |
+
+These are baseline measurements, not tuned claims of industrial readiness.
+Category-level variation is substantial and remains visible in the generated
+`category_metrics.csv` rather than being hidden by the macro summary.
+
+## Reproduce the M3 multi-scale ablation
+
+M3 freezes a five-stage category-specific ablation: the M2 reference, reduced
+memory capacity, multi-scale features, bounded candidates, and k-center coreset
+selection. It also evaluates one category-balanced unified index. The image and
+pixel thresholds remain validation-normal-only; test defects do not tune any
+configuration or operating threshold.
+
+```powershell
+# Fast end-to-end verification on one category (six evaluations).
+uv run --extra cpu python scripts/run_m3_multiscale.py `
+  --device cpu --quick --category candle
+
+# Reportable evaluation: 60 category-specific ablations plus 12 unified jobs.
+uv run --extra cpu python scripts/run_m3_multiscale.py --device cpu
+```
+
+Interrupted runs can be continued with `--resume <run-directory>`. Each run saves
+resolved settings, input/model hashes, per-image predictions, category metrics,
+component deltas, resource measurements, reloadable indexes, index hashes, and
+qualitative panels.
+
+The frozen full VisA run produced these macro per-category means. Latency is CPU
+nearest-neighbour scoring time per test image on the development workstation;
+total index storage sums the 12 category indexes, except for the single unified
+index.
+
+| Model | Image AUROC | Normal FPR | Pixel AUROC | Pixel AP | Mean IoU | AUPRO@30 | Score latency | Index storage |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Mid-scale random, 2,048/category (reference) | 0.8283 | 0.0477 | 0.9488 | 0.3038 | **0.2507** | 0.7156 | 2.82 ms | 6.63 MiB |
+| Mid-scale random, 512/category | 0.7615 | 0.0433 | 0.9372 | 0.2562 | 0.1605 | 0.7005 | **0.87 ms** | 2.45 MiB |
+| Multi-scale random, 512/category | 0.7465 | 0.0460 | 0.9427 | 0.2173 | 0.1081 | 0.7226 | 2.27 ms | 2.62 MiB |
+| Multi-scale bounded random, 512/category | 0.7506 | **0.0411** | 0.9434 | 0.2363 | 0.0893 | 0.7156 | 2.23 ms | 2.62 MiB |
+| Multi-scale k-center, 512/category | **0.8679** | 0.0471 | **0.9555** | **0.3210** | 0.1665 | **0.7692** | 2.25 ms | 2.62 MiB |
+| Multi-scale balanced unified, 1,536 total | 0.7936 | 0.0566 | 0.9257 | 0.2227 | 0.1087 | 0.6942 | 4.64 ms | **0.45 MiB** |
+
+The coreset leads image ranking, pixel ranking, pixel AP, and AUPRO, while the
+reference retains the strongest thresholded mean IoU. M4 therefore carries both
+frozen category-specific models forward rather than hiding the trade-off behind
+a single aggregate rank. These localization values supersede the initial M2/M3
+run: a geometry audit found that non-square images were center-cropped while
+masks were stretched. The evaluator now applies the same centered crop to both;
+image scores and thresholds were unaffected.
+
+## Reproduce the M4 robustness study
+
+M4 freezes two severities each for JPEG compression, downscale/upscale, Gaussian
+blur, sensor-like noise, brightness/contrast, and rotation/translation. It
+evaluates the two M3 frontier models plus an equal-capacity normal-only nuisance
+augmentation intervention. The run also measures paired score-rank and heatmap
+stability, leave-one-category-out transfer, failure clusters, and nuisance-score
+correlations.
+
+```powershell
+# Full protocol on one small deterministic subset.
+uv run --extra cpu python scripts/run_m4_robustness.py `
+  --device cpu --quick --category candle
+
+# Reportable 12-category study (468 model-condition evaluations).
+uv run --extra cpu python scripts/run_m4_robustness.py --device cpu
+```
+
+The full study produced 84,318 predictions, 77,832 paired stability records, 12
+zero-shot transfer evaluations, 12 hashed intervention indexes, and 320 focused
+failure panels. Principal results are:
+
+- multi-scale robustness advantage over the reference is inconclusive:
+  −0.0072 image AUROC, 95% CI [−0.0235, +0.0083];
+- equal-budget normal nuisance augmentation improves shifted image AUROC by
+  0.0077, 95% CI [+0.0030, +0.0126], and reduces normal FPR by 0.0774;
+- retained-correct predictions have heatmaps 0.2153 more correlated with clean
+  explanations than shift failures, 95% CI [+0.2066, +0.2253];
+- leave-one-category-out image AUROC is only 0.5783, a mean loss of 0.2896 from
+  category-specific memory;
+- blur is the largest false-alarm failure, increasing the plain coreset's normal
+  FPR by 0.6426 on average across its two severities.
+
+See the [M4 robustness report](reports/M4_ROBUSTNESS.md) for the frozen ladder,
+family-level tables, failure clusters, transfer results, and limitations.
+
 ## Status
 
-M0 and M1 are complete. The official VisA archive was downloaded directly,
+M0 through M4 are complete. The official VisA archive was downloaded directly,
 verified against SHA-256, extracted through a traversal-safe atomic process,
 and audited across all 10,821 samples. The canonical manifest preserves the
 official test set and derives validation only from grouped training-normal
-images. M2—reproducible statistical, global-feature, and patch-memory
-baselines—is the active phase.
+images. Reproducible baselines, multi-scale/coreset ablations, category-specific
+and unified comparisons, resource measurements, reloadable hashed indexes, and
+the controlled robustness/transfer study now establish the evidence base for M5
+normal-only calibration and selective review.
 
 To reproduce M1 after configuring `.env`:
 

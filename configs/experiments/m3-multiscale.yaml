@@ -1,0 +1,62 @@
+experiment:
+  name: m3-multiscale
+  seed: 20260915
+  image_threshold_quantile: 0.95
+  pixel_threshold_quantile: 0.995
+  bootstrap_samples: 1000
+  bootstrap_confidence: 0.95
+  pro_max_fpr: 0.30
+  pro_thresholds: 50
+
+backbone:
+  architecture: resnet18
+  weights: IMAGENET1K_V1
+  layers: [layer1, layer2, layer3]
+  image_size: 224
+  batch_size: 16
+
+common_memory:
+  projected_dimension: 64
+  patches_per_image: 24
+  candidate_limit: 50000
+  image_score_fraction: 0.01
+  gaussian_sigma: 4.0
+
+ablations:
+  - id: reference_mid_random_2048
+    feature_mode: mid
+    selection: random
+    bank_size: 2048
+  - id: compact_mid_random_512
+    feature_mode: mid
+    selection: random
+    bank_size: 512
+  - id: multiscale_random_512
+    feature_mode: multiscale
+    selection: random
+    bank_size: 512
+  - id: multiscale_bounded_random_512
+    feature_mode: multiscale
+    selection: random
+    bank_size: 512
+    candidate_limit: 4096
+  - id: multiscale_coreset_512
+    feature_mode: multiscale
+    selection: kcenter
+    bank_size: 512
+    candidate_limit: 4096
+
+final_model:
+  variant: multiscale_coreset_512
+  unified_bank_per_category: 128
+
+quick:
+  train_per_category: 24
+  validation_per_category: 12
+  test_normal_per_category: 12
+  test_anomaly_per_category: 12
+  bootstrap_samples: 100
+  bank_size_cap: 64
+  candidate_limit_cap: 128
+  patches_per_image: 8
+  unified_bank_per_category: 16
