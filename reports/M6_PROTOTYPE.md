@@ -50,27 +50,27 @@ horizontal scrolling.
 
 ## CPU benchmark
 
-The authoritative run `m6-prototype-benchmark-20260921T055903Z` inspects two
+The authoritative run `m6-prototype-benchmark-20260921T065622Z` inspects two
 deterministically selected official-test images from each of 12 categories.
 Inputs are read in memory and are not copied into the benchmark artifacts.
 
 | Measurement | Result |
 |---|---:|
 | Images / categories | 24 / 12 |
-| Startup | 323.6 ms |
-| Mean end-to-end | 73.5 ms/image |
-| Median end-to-end | 73.8 ms/image |
-| P95 end-to-end | 103.6 ms/image |
-| Mean feature extraction | 12.5 ms/image |
-| Mean memory scoring | 3.7 ms/image |
-| Sequential throughput | 13.46 images/s |
-| Peak process working set | 547.8 MB |
+| Startup | 282.2 ms |
+| Mean end-to-end | 78.7 ms/image |
+| Median end-to-end | 77.3 ms/image |
+| P95 end-to-end | 108.8 ms/image |
+| Mean feature extraction | 13.5 ms/image |
+| Mean memory scoring | 4.2 ms/image |
+| Sequential throughput | 12.55 images/s |
+| Peak process working set | 548.7 MB |
 | Python traced allocation peak | 16.2 MB |
 | Backbone checkpoint | 46.83 MB |
 | All 12 category indexes | 2.75 MB |
 | Calibration artifacts | 0.39 MB |
 | Total runtime artifacts | 49.97 MB |
-| Self-contained UI assets | 24.4 KB |
+| Served self-contained UI assets | 35.3 KB |
 
 The working set includes the Python interpreter, imported scientific/PyTorch
 runtime, resident ResNet-18, current image tensors, and cached category indexes.

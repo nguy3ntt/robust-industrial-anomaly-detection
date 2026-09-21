@@ -36,9 +36,9 @@ class PrototypeHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     static_root = Path(__file__).with_name("static")
     static_files: ClassVar[dict[str, tuple[str, str]]] = {
-        "/": ("index.html", "text/html; charset=utf-8"),
+        "/": ("workstation.html", "text/html; charset=utf-8"),
         "/app.js": ("app.js", "text/javascript; charset=utf-8"),
-        "/styles.css": ("styles.css", "text/css; charset=utf-8"),
+        "/styles.css": ("workstation.css", "text/css; charset=utf-8"),
     }
 
     def log_message(self, format: str, *args: object) -> None:

@@ -70,15 +70,15 @@ on loopback and should not be reverse-proxied or exposed to a network.
 ## Resource profile
 
 The authoritative 24-image CPU benchmark is
-`m6-prototype-benchmark-20260921T055903Z`:
+`m6-prototype-benchmark-20260921T065622Z`:
 
-- startup: 323.6 ms on the measured warm-filesystem run;
-- median / p95 end-to-end: 73.8 / 103.6 ms per image;
-- sequential throughput: 13.46 images/s;
-- peak process working set: 547.8 MB;
+- startup: 282.2 ms on the measured warm-filesystem run;
+- median / p95 end-to-end: 77.3 / 108.8 ms per image;
+- sequential throughput: 12.55 images/s;
+- peak process working set: 548.7 MB;
 - total model, index, and calibration artifacts: 49.97 MB;
 - all 12 category indexes: 2.75 MB;
-- self-contained HTML/CSS/JavaScript: 24.4 KB.
+- served self-contained HTML/CSS/JavaScript: 35.3 KB.
 
 Measurements are workstation- and cache-dependent. The benchmark saves exact
 environment, input IDs, per-stage timings, configuration, provenance, and hashes.

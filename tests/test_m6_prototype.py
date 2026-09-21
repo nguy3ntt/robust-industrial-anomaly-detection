@@ -118,12 +118,13 @@ def test_filename_is_reduced_to_a_bounded_basename() -> None:
 
 def test_static_interface_has_required_evidence_and_no_external_dependencies() -> None:
     static = ROOT / "src/robust_industrial_anomaly_detection/prototype/static"
-    html = (static / "index.html").read_text(encoding="utf-8")
+    html = (static / "workstation.html").read_text(encoding="utf-8")
 
     assert "Anomaly score" in html
     assert "Conformal p" in html
     assert "Spatial evidence" in html
     assert "Export metadata report" in html
+    assert 'id="theme-toggle"' in html
     assert "http://" not in html and "https://" not in html
 
 

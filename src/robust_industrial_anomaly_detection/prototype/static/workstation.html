@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <title>RIAD · Inspection Workstation</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body data-theme="dark">
+    <header class="command-bar">
+      <a class="brand" href="/" aria-label="Robust Industrial Anomaly Detection home">
+        <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+          <path d="M22 3 39 12.5v19L22 41 5 31.5v-19L22 3Z"></path>
+          <circle cx="22" cy="22" r="8"></circle>
+          <path d="M22 9v7m0 12v7M9 22h7m12 0h7"></path>
+        </svg>
+        <span class="brand-copy">
+          <strong>RIAD</strong>
+          <small>Inspection workstation</small>
+        </span>
+        <span class="build-tag">M6 / LOCAL</span>
+      </a>
+      <div class="command-actions">
+        <div class="system-state">
+          <span class="status-dot" id="status-dot"></span>
+          <span><small>ENGINE STATUS</small><strong id="system-status">INITIALIZING</strong></span>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="false">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="3.5"></circle>
+            <path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6 16 16M16 4l-1.4 1.4M5.4 14.6 4 16"></path>
+          </svg>
+          <span id="theme-label">DARK</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="console">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="overline">NORMAL-ONLY VISION SYSTEM <span>/</span> CALIBRATED DECISION SUPPORT</p>
+          <h1>Visual anomaly<br><span>inspection console.</span></h1>
+          <p class="lede">Evaluate known product categories against verified normal memory,
+            inspect spatial evidence, and preserve uncertainty through selective review.</p>
+        </div>
+        <dl class="system-specs" aria-label="System properties">
+          <div><dt>MODEL</dt><dd id="model-spec">FROZEN MULTI-SCALE</dd></div>
+          <div><dt>POLICY</dt><dd>CATEGORY CONFORMAL</dd></div>
+          <div><dt>DATA PATH</dt><dd>MEMORY ONLY / NO RETENTION</dd></div>
+        </dl>
+      </section>
+
+      <section class="module input-module">
+        <div class="module-index" aria-hidden="true"><span>01</span><small>INPUT</small></div>
+        <div class="module-body">
+          <div class="module-heading">
+            <div>
+              <p class="module-code">INSPECTION PARAMETERS</p>
+              <h2>Configure acquisition</h2>
+            </div>
+            <p class="module-note">Select the known product category before inference.<br>Calibration is category-specific.</p>
+          </div>
+          <div class="controls">
+            <label class="field-label">Product category
+              <select id="category" disabled><option>Loading…</option></select>
+            </label>
+            <label class="file-drop" id="file-drop" tabindex="0">
+              <input id="files" type="file" accept="image/png,image/jpeg,image/webp,image/bmp,image/tiff" multiple disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15v4h16v-4"></path></svg>
+              <span><strong>Load image set</strong><small id="file-summary">PNG, JPEG, WebP, BMP or TIFF</small></span>
+            </label>
+            <button class="primary" id="inspect" disabled>
+              <span>Execute inspection</span><span class="button-key">RUN ↗</span>
+            </button>
+          </div>
+          <div class="progress-wrap hidden" id="progress-wrap">
+            <div class="progress-track"><span id="progress-bar"></span></div>
+            <span id="progress-label">Preparing…</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="standby" id="empty-state">
+        <div class="reticle" aria-hidden="true"><span></span><span></span><i></i></div>
+        <div>
+          <p class="module-code">WORKSPACE / STANDBY</p>
+          <h2>Awaiting inspection input</h2>
+          <p>Select one category and up to 24 images. The frozen model, calibration,
+            and operating thresholds from M5 will be applied without test-time adjustment.</p>
+        </div>
+        <div class="standby-readout" aria-label="Ready-state checks">
+          <span><i></i>LOCAL SESSION</span>
+          <span><i></i>VERIFIED ARTIFACTS</span>
+          <span><i></i>NO PIXEL EXPORT</span>
+        </div>
+      </section>
+
+      <section class="results hidden" id="results">
+        <article class="module decision-module" id="decision-card">
+          <div class="module-index" aria-hidden="true"><span>02</span><small>RESULT</small></div>
+          <div class="module-body">
+            <div class="result-heading">
+              <div>
+                <p class="module-code">CURRENT INSPECTION</p>
+                <h2 id="result-name">—</h2>
+              </div>
+              <span class="decision-pill" id="decision-pill">—</span>
+            </div>
+            <div class="metric-grid">
+              <div><span>Anomaly score</span><strong id="score">—</strong><small id="score-threshold">—</small></div>
+              <div><span>Conformal p</span><strong id="p-value">—</strong><small>ALERT ≤ 0.05 / REVIEW ≤ 0.20</small></div>
+              <div><span>Flagged area</span><strong id="area">—</strong><small>PIXELS ABOVE FROZEN THRESHOLD</small></div>
+              <div><span>Runtime</span><strong id="runtime">—</strong><small id="runtime-detail">—</small></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="module evidence">
+          <div class="module-index" aria-hidden="true"><span>03</span><small>MAP</small></div>
+          <div class="module-body">
+            <div class="section-heading">
+              <div><p class="module-code">MODEL EVIDENCE</p><h2>Spatial evidence</h2></div>
+              <span class="legend">LOW <i></i> HIGH</span>
+            </div>
+            <div class="image-grid">
+              <figure><div class="image-label">A / MODEL INPUT</div><img id="preview" alt="Centered model input"><figcaption>Centered square crop · evaluated geometry</figcaption></figure>
+              <figure><div class="image-label">B / ANOMALY FIELD</div><img id="heatmap" alt="Anomaly heatmap overlay"><figcaption>White contour · frozen localization support</figcaption></figure>
+            </div>
+          </div>
+        </article>
+
+        <article class="module limits">
+          <div class="module-index" aria-hidden="true"><span>04</span><small>LIMITS</small></div>
+          <div class="module-body">
+            <div class="section-heading"><div><p class="module-code">INTERPRETATION BOUNDARY</p><h2>Operational cautions</h2></div></div>
+            <ul id="limitations"></ul>
+          </div>
+        </article>
+
+        <article class="module batch">
+          <div class="module-index" aria-hidden="true"><span>05</span><small>LOG</small></div>
+          <div class="module-body">
+            <div class="section-heading batch-heading">
+              <div><p class="module-code">SESSION RESULTS</p><h2>Batch results</h2><p id="batch-summary">—</p></div>
+              <button class="secondary" id="export">Export metadata report</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>FILE</th><th>CATEGORY</th><th>DECISION</th><th>SCORE</th><th>P-VALUE</th><th>TIME</th></tr></thead>
+                <tbody id="result-rows"></tbody>
+              </table>
+            </div>
+            <p class="export-note">REPORT SCOPE · decisions, measurements, policy and limitations / image pixels excluded</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="error hidden" id="error" role="alert"></section>
+    </main>
+
+    <footer>
+      <span id="model-name">FROZEN MODEL</span>
+      <span>LOCALHOST : 8765</span>
+      <span>RESEARCH PROTOTYPE / NOT CERTIFIED QUALITY CONTROL</span>
+    </footer>
+    <script src="/app.js"></script>
+  </body>
+</html>

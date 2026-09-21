@@ -6,6 +6,19 @@ const category = $("category");
 const fileInput = $("files");
 const inspectButton = $("inspect");
 const fileDrop = $("file-drop");
+const themeButton = $("theme-toggle");
+
+function applyTheme(theme) {
+  const isLight = theme === "light";
+  document.body.dataset.theme = isLight ? "light" : "dark";
+  themeButton.setAttribute("aria-pressed", String(isLight));
+  themeButton.setAttribute("aria-label", `Switch to ${isLight ? "dark" : "light"} mode`);
+  $("theme-label").textContent = isLight ? "LIGHT" : "DARK";
+}
+
+themeButton.addEventListener("click", () => {
+  applyTheme(document.body.dataset.theme === "dark" ? "light" : "dark");
+});
 
 function showError(message) {
   $("error").textContent = message;
@@ -25,7 +38,8 @@ async function initialize() {
     category.disabled = false;
     fileInput.disabled = false;
     $("model-name").textContent = `${state.config.model} · ${state.config.device}`;
-    $("system-status").textContent = "Model ready · local only";
+    $("model-spec").textContent = state.config.model.replaceAll("_", " ").toUpperCase();
+    $("system-status").textContent = "READY / LOCAL";
     $("status-dot").classList.add("ready");
     $("file-summary").textContent = `Up to ${state.config.max_batch_files} files · ${formatBytes(state.config.max_upload_bytes)}`;
     updateButton();

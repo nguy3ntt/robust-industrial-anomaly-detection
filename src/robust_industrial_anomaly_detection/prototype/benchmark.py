@@ -30,6 +30,7 @@ from robust_industrial_anomaly_detection.prototype.engine import (
     PrototypeError,
     PrototypeSettings,
 )
+from robust_industrial_anomaly_detection.prototype.server import PrototypeHandler
 
 
 class _ProcessMemoryCounters(ctypes.Structure):
@@ -173,7 +174,8 @@ def run_benchmark(
     score_times = [float(cast(int | float, row["memory_scoring_ms"])) for row in rows]
     footprint = engine.resource_footprint()
     static_root = Path(__file__).with_name("static")
-    static_bytes = sum(path.stat().st_size for path in static_root.iterdir() if path.is_file())
+    served_assets = {filename for filename, _content_type in PrototypeHandler.static_files.values()}
+    static_bytes = sum((static_root / filename).stat().st_size for filename in served_assets)
     summary: dict[str, object] = {
         "mode": "full",
         "device": device,

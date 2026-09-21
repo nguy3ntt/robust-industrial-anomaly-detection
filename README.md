@@ -295,9 +295,9 @@ decision, score reference, thresholded heatmap support, per-stage timing, and
 limitations. The server rejects non-loopback binding and verifies the full
 M5→M4 model/calibration/index provenance before becoming ready.
 
-The finalized CPU prototype reaches 73.8 ms median and 103.6 ms p95 end-to-end
-latency across 24 images, or 13.46 sequential images/s. Peak process working set
-is 547.8 MB and runtime model/calibration artifacts total 49.97 MB.
+The finalized CPU prototype reaches 77.3 ms median and 108.8 ms p95 end-to-end
+latency across 24 images, or 12.55 sequential images/s. Peak process working set
+is 548.7 MB and runtime model/calibration artifacts total 49.97 MB.
 
 See the [M6 prototype report](reports/M6_PROTOTYPE.md),
 [model card](docs/MODEL_CARD.md), and [system card](docs/SYSTEM_CARD.md) for the
