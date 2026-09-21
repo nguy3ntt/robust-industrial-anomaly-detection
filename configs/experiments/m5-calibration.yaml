@@ -1,0 +1,38 @@
+experiment:
+  name: m5-calibration
+  seed: 20260915
+  bootstrap_samples: 1000
+  confidence: 0.95
+
+source_m4:
+  experiment_name: m4-robustness
+  reference_model: reference_mid_random_2048
+  candidate_model: multiscale_coreset_512
+  primary_model: multiscale_augmented_coreset_512
+  image_size: 224
+  batch_size: 16
+  image_score_fraction: 0.01
+
+calibration:
+  quantile: 0.95
+  anomaly_alpha: 0.05
+  review_alpha: 0.20
+  scopes:
+    - category
+    - pooled
+
+coverage_risk:
+  review_alphas:
+    - 0.05
+    - 0.10
+    - 0.20
+    - 0.30
+    - 0.40
+    - 0.50
+  minimum_useful_coverage: 0.70
+
+quick:
+  validation_per_category: 12
+  test_normal_per_category: 12
+  test_anomaly_per_category: 12
+  bootstrap_samples: 100

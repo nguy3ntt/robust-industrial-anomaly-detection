@@ -239,16 +239,49 @@ failure panels. Principal results are:
 See the [M4 robustness report](reports/M4_ROBUSTNESS.md) for the frozen ladder,
 family-level tables, failure clusters, transfer results, and limitations.
 
+## Reproduce the M5 calibration study
+
+M5 reuses the verified M4 test scores and computes only clean validation-normal
+scores for empirical-quantile and split-conformal calibration. Category scores
+are checkpointed atomically, so an interrupted run resumes without repeating
+completed categories.
+
+```powershell
+# Fast 12-category end-to-end contract check.
+uv run --extra cpu python scripts/run_m5_calibration.py --device cpu --quick
+
+# Reportable 12-category calibration and selective-review study.
+uv run --extra cpu python scripts/run_m5_calibration.py --device cpu
+
+# Resume an interrupted run using the exact path shown in progress.json.
+uv run --extra cpu python scripts/run_m5_calibration.py --device cpu `
+  --resume D:\industrial-anomaly-artifacts\runs\m5-calibration-full-<timestamp>
+```
+
+The primary augmented-coreset policy uses category-conditional conformal
+p-values: `p <= 0.05` is anomalous, `0.05 < p <= 0.20` is review, and
+`p > 0.20` is normal. On clean test data it yields macro normal FPR 0.0430,
+review rate 0.1958, automatic coverage 0.8042, and selective risk 0.1940.
+Category calibration improves false-alarm alignment over pooled calibration by
+0.0681 (95% CI [0.00495, 0.18088]). The review policy reduces automatic risk by
+0.07125 (95% CI [0.06063, 0.08122]) while preserving 0.7790 mean coverage across
+clean and shifted conditions.
+
+These guarantees do not survive arbitrary distribution shift: severe blur,
+noise, JPEG, and geometry produce normal FPR 0.8686, 0.6820, 0.4696, and 0.2179.
+See the [M5 calibration report](reports/M5_CALIBRATION.md) for category behavior,
+coverage-risk definitions, exchangeability assumptions, and failure modes.
+
 ## Status
 
-M0 through M4 are complete. The official VisA archive was downloaded directly,
+M0 through M5 are complete. The official VisA archive was downloaded directly,
 verified against SHA-256, extracted through a traversal-safe atomic process,
 and audited across all 10,821 samples. The canonical manifest preserves the
 official test set and derives validation only from grouped training-normal
 images. Reproducible baselines, multi-scale/coreset ablations, category-specific
-and unified comparisons, resource measurements, reloadable hashed indexes, and
-the controlled robustness/transfer study now establish the evidence base for M5
-normal-only calibration and selective review.
+and unified comparisons, resource measurements, reloadable hashed indexes,
+controlled robustness/transfer evaluation, and normal-only selective calibration
+now establish the evidence base for the M6 local prototype.
 
 To reproduce M1 after configuring `.env`:
 
