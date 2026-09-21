@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>RIAD · Local Inspector</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Robust Industrial Anomaly Detection home">
+        <svg class="brand-mark" viewBox="0 0 42 42" aria-hidden="true">
+          <path d="M21 3 36.6 12v18L21 39 5.4 30V12L21 3Z"></path>
+          <path d="m13 23 5 5 11-14"></path>
+        </svg>
+        <span><strong>RIAD</strong><small>Local inspection console</small></span>
+      </a>
+      <div class="system-state">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="system-status">Starting model…</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="intro">
+        <div>
+          <p class="eyebrow">M6 · calibrated decision support</p>
+          <h1>Inspect visual evidence.<br><span>Keep uncertainty visible.</span></h1>
+          <p class="lede">A local, normal-only anomaly detector with spatial evidence and a
+            human-review region. Your image stays in memory and is never added to exports.</p>
+        </div>
+        <div class="privacy-card">
+          <span class="privacy-icon">⌁</span>
+          <div><strong>Local by design</strong><span>Loopback only · no upload retention</span></div>
+        </div>
+      </section>
+
+      <section class="control-panel card">
+        <div class="control-copy">
+          <span class="step">01</span>
+          <div><h2>Configure inspection</h2><p>Use the known product category. Calibration is category-specific.</p></div>
+        </div>
+        <div class="controls">
+          <label>Product category<select id="category" disabled><option>Loading…</option></select></label>
+          <label class="file-drop" id="file-drop" tabindex="0">
+            <input id="files" type="file" accept="image/png,image/jpeg,image/webp,image/bmp,image/tiff" multiple disabled>
+            <span class="drop-title">Choose images or drop them here</span>
+            <span class="drop-meta" id="file-summary">PNG, JPEG, WebP, BMP or TIFF</span>
+          </label>
+          <button class="primary" id="inspect" disabled>
+            <span>Run inspection</span><span aria-hidden="true">↗</span>
+          </button>
+        </div>
+        <div class="progress-wrap hidden" id="progress-wrap">
+          <div class="progress-track"><span id="progress-bar"></span></div>
+          <span id="progress-label">Preparing…</span>
+        </div>
+      </section>
+
+      <section class="empty card" id="empty-state">
+        <div class="radar"><span></span><span></span><i></i></div>
+        <h2>Evidence will appear here</h2>
+        <p>Select one category and up to 24 images. The same frozen model, calibration,
+          and thresholds used in the M5 study will be applied.</p>
+      </section>
+
+      <section class="results hidden" id="results">
+        <article class="decision-card card" id="decision-card">
+          <div class="result-heading">
+            <div><p class="eyebrow">Current inspection</p><h2 id="result-name">—</h2></div>
+            <span class="decision-pill" id="decision-pill">—</span>
+          </div>
+          <div class="metric-grid">
+            <div><span>Anomaly score</span><strong id="score">—</strong><small id="score-threshold">—</small></div>
+            <div><span>Conformal p</span><strong id="p-value">—</strong><small>Alert ≤ 0.05 · review ≤ 0.20</small></div>
+            <div><span>Flagged area</span><strong id="area">—</strong><small>Pixels above frozen localization threshold</small></div>
+            <div><span>Runtime</span><strong id="runtime">—</strong><small id="runtime-detail">—</small></div>
+          </div>
+        </article>
+
+        <article class="evidence card">
+          <div class="section-heading"><div><span class="step">02</span><h2>Spatial evidence</h2></div><span class="legend">Low <i></i> High</span></div>
+          <div class="image-grid">
+            <figure><img id="preview" alt="Centered model input"><figcaption>Model input · centered square crop</figcaption></figure>
+            <figure><img id="heatmap" alt="Anomaly heatmap overlay"><figcaption>Heatmap · white contour marks thresholded support</figcaption></figure>
+          </div>
+        </article>
+
+        <article class="limits card">
+          <div class="section-heading"><div><span class="step">03</span><h2>Interpret with limits</h2></div></div>
+          <ul id="limitations"></ul>
+        </article>
+
+        <article class="batch card">
+          <div class="section-heading batch-heading">
+            <div><span class="step">04</span><div><h2>Batch results</h2><p id="batch-summary">—</p></div></div>
+            <button class="secondary" id="export">Export metadata report</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>File</th><th>Category</th><th>Decision</th><th>Score</th><th>p-value</th><th>Time</th></tr></thead>
+              <tbody id="result-rows"></tbody>
+            </table>
+          </div>
+          <p class="export-note">Exports contain decisions, metrics, policy, and limitations—never image pixels.</p>
+        </article>
+      </section>
+
+      <section class="error hidden" id="error" role="alert"></section>
+    </main>
+
+    <footer><span id="model-name">Frozen model</span><span>Research prototype · not certified quality control</span></footer>
+    <script src="/app.js"></script>
+  </body>
+</html>

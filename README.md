@@ -272,16 +272,48 @@ noise, JPEG, and geometry produce normal FPR 0.8686, 0.6820, 0.4696, and 0.2179.
 See the [M5 calibration report](reports/M5_CALIBRATION.md) for category behavior,
 coverage-risk definitions, exchangeability assumptions, and failure modes.
 
+## Run the M6 local inspector
+
+The practical prototype serves a self-contained browser interface on loopback.
+Images are decoded and inspected in memory; the application does not retain
+uploads, and exported JSON reports exclude original and derived image pixels.
+
+```powershell
+# Start the frozen CPU prototype, then open http://127.0.0.1:8765.
+uv run --extra cpu python scripts/run_m6_prototype.py --device cpu
+
+# Optionally open the browser automatically.
+uv run --extra cpu python scripts/run_m6_prototype.py --device cpu --open-browser
+
+# Reproduce the 24-image latency, memory, throughput, and size benchmark.
+uv run --extra cpu python scripts/benchmark_m6_prototype.py --device cpu
+```
+
+Select the known product category, choose up to 24 images, and run inspection.
+The result shows the anomaly score, category conformal p-value, three-way
+decision, score reference, thresholded heatmap support, per-stage timing, and
+limitations. The server rejects non-loopback binding and verifies the full
+M5→M4 model/calibration/index provenance before becoming ready.
+
+The finalized CPU prototype reaches 73.8 ms median and 103.6 ms p95 end-to-end
+latency across 24 images, or 13.46 sequential images/s. Peak process working set
+is 547.8 MB and runtime model/calibration artifacts total 49.97 MB.
+
+See the [M6 prototype report](reports/M6_PROTOTYPE.md),
+[model card](docs/MODEL_CARD.md), and [system card](docs/SYSTEM_CARD.md) for the
+runtime design, benchmark, privacy controls, intended use, and deployment limits.
+
 ## Status
 
-M0 through M5 are complete. The official VisA archive was downloaded directly,
+M0 through M6 are complete. The official VisA archive was downloaded directly,
 verified against SHA-256, extracted through a traversal-safe atomic process,
 and audited across all 10,821 samples. The canonical manifest preserves the
 official test set and derives validation only from grouped training-normal
 images. Reproducible baselines, multi-scale/coreset ablations, category-specific
 and unified comparisons, resource measurements, reloadable hashed indexes,
 controlled robustness/transfer evaluation, and normal-only selective calibration
-now establish the evidence base for the M6 local prototype.
+now feed a local, calibrated, privacy-preserving inspection prototype. M7 will
+freeze the final academic and portfolio package.
 
 To reproduce M1 after configuring `.env`:
 

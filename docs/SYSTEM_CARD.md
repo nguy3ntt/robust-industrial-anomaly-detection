@@ -1,0 +1,94 @@
+# System card — local calibrated inspection prototype
+
+## Purpose and boundary
+
+The M6 prototype makes the completed M2–M5 research system inspectable by a
+reviewer. It accepts one or more images for a known category and returns an
+anomaly score, conformal p-value, three-way recommendation, heatmap, threshold
+references, timing, and limitations.
+
+It is local decision support, not autonomous industrial control. A human remains
+responsible for interpreting review/anomaly results and for responding to input
+quality or distribution shift.
+
+## Architecture and data flow
+
+1. A standard-library HTTP server binds to `127.0.0.1` by default.
+2. The browser sends each selected image as a bounded raw request.
+3. The server decodes the image in memory, applies EXIF orientation, and uses the
+   same centered 224×224 crop as evaluation.
+4. One resident frozen ResNet-18 extracts multi-scale features.
+5. The requested category's verified 512-entry index is loaded lazily and cached.
+6. The image score and spatial score map are computed by nearest-memory distance.
+7. Verified M5 validation-normal scores produce a category conformal p-value and
+   normal/review/anomalous decision.
+8. The browser renders the centered input, heatmap overlay, metrics, limitations,
+   and batch table.
+
+Inference is serialized behind a model lock because the HTTP layer is threaded.
+The backbone remains resident and category memories are cached after first use.
+
+## Privacy and security properties
+
+- Loopback binding is enforced; non-loopback hosts are rejected.
+- Uploaded image bytes and rendered previews are held only in memory.
+- The server does not create upload, preview, or history files.
+- Export uses a fixed allow-list and removes original and derived image data.
+- Filenames are reduced to bounded basenames before display or export.
+- Per-image bytes, decoded pixel count, animation, and supported image decoding
+  are validated before inference.
+- Responses set no-store, content-type, referrer, framing, and restrictive
+  content-security headers.
+- The UI has no CDN, analytics, font, script, or network dependency.
+- Model, calibration, source-run, index, and backbone hashes are verified before
+  the server becomes ready.
+
+The server is a research prototype and has no user authentication. It must stay
+on loopback and should not be reverse-proxied or exposed to a network.
+
+## Human oversight
+
+- The operator must select the correct category.
+- The review state is a required outcome, not an error to suppress.
+- The UI keeps the exchangeability and shift limitations adjacent to every result.
+- A heatmap is supporting evidence, not a causal explanation.
+- Severe blur, noise, compression, geometry change, or unexpected score drift
+  should trigger capture investigation or recalibration rather than automatic
+  threshold adjustment.
+
+## Failure handling
+
+- Missing or modified artifacts prevent startup.
+- Unsupported, empty, oversized, highly decompressive, or animated images are
+  rejected with a bounded client error.
+- A failed item stops the current browser batch and leaves completed results in
+  memory only; the operator can correct the input and retry.
+- No fallback silently changes model, category, or thresholds.
+- Server logs contain request status and internal exception type, but no image
+  payload or full local source path.
+
+## Resource profile
+
+The authoritative 24-image CPU benchmark is
+`m6-prototype-benchmark-20260921T055903Z`:
+
+- startup: 323.6 ms on the measured warm-filesystem run;
+- median / p95 end-to-end: 73.8 / 103.6 ms per image;
+- sequential throughput: 13.46 images/s;
+- peak process working set: 547.8 MB;
+- total model, index, and calibration artifacts: 49.97 MB;
+- all 12 category indexes: 2.75 MB;
+- self-contained HTML/CSS/JavaScript: 24.4 KB.
+
+Measurements are workstation- and cache-dependent. The benchmark saves exact
+environment, input IDs, per-stage timings, configuration, provenance, and hashes.
+
+## Operational checklist
+
+- Keep `.env`, dataset, model artifacts, and reports on approved local storage.
+- Start on the default loopback address.
+- Confirm the selected category and capture quality before acting on a result.
+- Treat review cases as unresolved until a person evaluates them.
+- Retain metadata reports only under the applicable data-governance policy.
+- Re-run the benchmark and verification suite after dependency, model, or hardware
+  changes.
