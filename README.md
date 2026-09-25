@@ -303,17 +303,41 @@ See the [M6 prototype report](reports/M6_PROTOTYPE.md),
 [model card](docs/MODEL_CARD.md), and [system card](docs/SYSTEM_CARD.md) for the
 runtime design, benchmark, privacy controls, intended use, and deployment limits.
 
+## Final academic and portfolio package
+
+M7 reconstructs the public evidence from hash-pinned completed M2–M6 runs. It
+refuses incomplete runs, manifest drift, metadata drift, or changed source
+tables, then regenerates the aggregate tables, scientific figures, and package
+manifest without copying dataset images, private inputs, weights, or feature
+banks.
+
+```powershell
+uv run --extra cpu python scripts/build_m7_package.py `
+  --config configs/reporting/m7.yaml
+```
+
+The verified package contains 11 outputs and has SHA-256
+`51f8c4151b82c9701e734ecb93cb2fbd915b8db764c7062b2abd386e0fd2b36f`.
+Start with the [final evaluation](reports/M7_FINAL_EVALUATION.md),
+[conference-style paper](reports/CONFERENCE_PAPER.md),
+[portfolio case study](docs/PORTFOLIO_CASE_STUDY.md), and
+[reproducibility audit](docs/REPRODUCIBILITY_AUDIT.md). Presentation-ready
+deliverables are the [paper PDF](output/pdf/robust-industrial-anomaly-detection-paper.pdf),
+[poster PDF](output/pdf/robust-industrial-anomaly-detection-poster.pdf),
+[editable deck](output/presentations/robust-industrial-anomaly-detection-m7-final.pptx),
+and [caption-led demo](output/video/robust-industrial-anomaly-detection-demo.mp4).
+
 ## Status
 
-M0 through M6 are complete. The official VisA archive was downloaded directly,
+M0 through M7 are complete. The official VisA archive was downloaded directly,
 verified against SHA-256, extracted through a traversal-safe atomic process,
 and audited across all 10,821 samples. The canonical manifest preserves the
 official test set and derives validation only from grouped training-normal
 images. Reproducible baselines, multi-scale/coreset ablations, category-specific
 and unified comparisons, resource measurements, reloadable hashed indexes,
 controlled robustness/transfer evaluation, and normal-only selective calibration
-now feed a local, calibrated, privacy-preserving inspection prototype. M7 will
-freeze the final academic and portfolio package.
+feed a local, calibrated, privacy-preserving inspection prototype and a
+hash-gated final academic/portfolio package.
 
 To reproduce M1 after configuring `.env`:
 

@@ -1,0 +1,6 @@
+test,label,estimate,ci_low,ci_high,units,conclusion,stage
+H2_multiscale_image_robustness_advantage,H2 Multi-scale robustness,-0.007186739090575737,-0.023492578497433088,0.008283470732489888,72,inconclusive,M4
+augmentation_intervention_image_robustness_advantage,Intervention robustness,0.007741632288228776,0.0029809954276677356,0.012582243536853645,144,supported,M4
+H5_explanation_stability_failure_separation,H5 Explanation stability,0.21529749525797193,0.20658406842439633,0.22526763828581298,18684,supported,M4
+H3_category_conditional_false_alarm_alignment,H3 Category calibration,0.0680968096809681,0.004949876237623781,0.18087788778877886,12,supported,M5
+H4_selective_review_reduces_automatic_risk,H4 Selective review,0.07124698464059674,0.06063432403995585,0.08122045147840577,156,supported,M5

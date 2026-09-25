@@ -10,3 +10,7 @@ policy. Changes invalidate the trusted manifest until M1 is rerun.
 
 `prototype/m6.yaml` freezes the loopback server safety limits, deployed M5
 policy, batch bound, and benchmark sampling count for the local inspector.
+
+`reporting/m7.yaml` pins the completed M2–M6 source runs, metadata hashes,
+required source-file hashes, final output directory, and publication style for
+the deterministic academic/portfolio package reconstruction.

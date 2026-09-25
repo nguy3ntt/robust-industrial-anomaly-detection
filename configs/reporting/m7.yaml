@@ -1,0 +1,44 @@
+schema_version: 1
+seed: 20260915
+manifest_sha256: 73283c2704ed18183e5394fff699b0f8d916113393e53ba53986adaf6f32cc6e
+output_directory: reports/m7
+sources:
+  m2:
+    run: m2-baselines-full-20260920T101333Z
+    metadata_sha256: 893dfdc17541919f0afd82397f7965b2349245bf832ab8b32a92772c46907239
+    required_files:
+      category_metrics.csv: category_metrics_sha256
+      predictions.csv: predictions_sha256
+  m3:
+    run: m3-multiscale-full-20260920T095658Z
+    metadata_sha256: 5be731c91344ed29d8c407d0cf170fb9bfc9401836bd39ec979e639228fea230
+    required_files:
+      summary.json: summary_sha256
+      category_metrics.csv: category_metrics_sha256
+      predictions.csv: predictions_sha256
+  m4:
+    run: m4-robustness-full-20260919T143403Z
+    metadata_sha256: 5f2d2f4afbc302f210ce77fa5ad4b6b8fb6db8f01864b5206a74762471cdb00c
+    required_files:
+      summary.json: summary_sha256
+      category_metrics.csv: category_metrics_sha256
+      predictions.csv: predictions_sha256
+      family_summary.csv: family_summary_sha256
+      hypothesis_tests.csv: hypothesis_tests_sha256
+      failure_clusters.csv: failure_clusters_sha256
+      category_transfer.csv: category_transfer_sha256
+  m5:
+    run: m5-calibration-full-20260920T110316Z
+    metadata_sha256: 5936b8d06771e58036e1db01913c5e6e2e8da603ceab402a8c128125ec52b22f
+    required_files:
+      summary.json: summary_sha256
+      calibration_summary.csv: calibration_summary_sha256
+      coverage_risk.csv: coverage_risk_sha256
+      hypothesis_tests.csv: hypothesis_tests_sha256
+      category_conditional.csv: category_conditional_sha256
+  m6:
+    run: m6-prototype-benchmark-20260921T065622Z
+    metadata_sha256: a76c7dcb99e60ae6f21e9aa33e96a39979f9a86c7401bde6ce864f1851e04641
+    required_files:
+      summary.json: summary_sha256
+      sample_timings.csv: sample_timings_sha256
