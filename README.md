@@ -303,6 +303,36 @@ See the [M6 prototype report](reports/M6_PROTOTYPE.md),
 [model card](docs/MODEL_CARD.md), and [system card](docs/SYSTEM_CARD.md) for the
 runtime design, benchmark, privacy controls, intended use, and deployment limits.
 
+## Run the capture-quality-gated inspector
+
+M8 adds a category-conditional, normal-only capture gate in front of the frozen
+M6 pipeline. The gate measures illumination, contrast, focus, noise, exposure
+clipping, compression, and framing on the exact 224×224 model input. A rejected
+capture returns `recapture` and the anomaly backbone is not executed.
+
+```powershell
+# Reproduce the gate calibration and controlled-shift evaluation.
+uv run --extra cpu python scripts/run_m8_quality_gate.py
+
+# Start the quality-gated local interface.
+uv run --extra cpu python scripts/run_m8_prototype.py --device cpu --open-browser
+
+# Benchmark the gated runtime on the same deterministic 24-image sample.
+uv run --extra cpu python scripts/benchmark_m6_prototype.py `
+  --device cpu --config configs/prototype/m8.yaml
+```
+
+Thresholds are fitted from training normals and calibrated only on the existing
+training-derived validation normals. The official test partition is used only
+for clean and frozen-shift evaluation. The original M6 configuration remains
+available for exact historical reproduction. See the
+[M8 capture-quality report](reports/M8_CAPTURE_QUALITY_GATE.md) for results and
+limitations.
+
+The full run rejects 1.98% of clean normals and 89.13% of shifted normals,
+intercepting 93.22% of shifted M5 false alerts. The serialized gate is 48 KB and
+adds 2.46 ms mean CPU time in the deterministic 24-image benchmark.
+
 ## Final academic and portfolio package
 
 M7 reconstructs the public evidence from hash-pinned completed M2–M6 runs. It
@@ -329,15 +359,15 @@ and [caption-led demo](output/video/robust-industrial-anomaly-detection-demo.mp4
 
 ## Status
 
-M0 through M7 are complete. The official VisA archive was downloaded directly,
+M0 through M8 are complete. The official VisA archive was downloaded directly,
 verified against SHA-256, extracted through a traversal-safe atomic process,
 and audited across all 10,821 samples. The canonical manifest preserves the
 official test set and derives validation only from grouped training-normal
 images. Reproducible baselines, multi-scale/coreset ablations, category-specific
 and unified comparisons, resource measurements, reloadable hashed indexes,
 controlled robustness/transfer evaluation, and normal-only selective calibration
-feed a local, calibrated, privacy-preserving inspection prototype and a
-hash-gated final academic/portfolio package.
+feed a local, calibrated, privacy-preserving inspection prototype with a
+pre-inference capture-quality gate and a hash-gated academic/portfolio package.
 
 To reproduce M1 after configuring `.env`:
 

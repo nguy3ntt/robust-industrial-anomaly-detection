@@ -19,7 +19,7 @@
           <strong>RIAD</strong>
           <small>Inspection workstation</small>
         </span>
-        <span class="build-tag">M6 / LOCAL</span>
+        <span class="build-tag">M8 / QUALITY-GATED</span>
       </a>
       <div class="command-actions">
         <div class="system-state">
@@ -46,7 +46,7 @@
         </div>
         <dl class="system-specs" aria-label="System properties">
           <div><dt>MODEL</dt><dd id="model-spec">FROZEN MULTI-SCALE</dd></div>
-          <div><dt>POLICY</dt><dd>CATEGORY CONFORMAL</dd></div>
+          <div><dt>POLICY</dt><dd>CAPTURE GATE → CATEGORY CONFORMAL</dd></div>
           <div><dt>DATA PATH</dt><dd>MEMORY ONLY / NO RETENTION</dd></div>
         </dl>
       </section>
@@ -86,8 +86,8 @@
         <div>
           <p class="module-code">WORKSPACE / STANDBY</p>
           <h2>Awaiting inspection input</h2>
-          <p>Select one category and up to 24 images. The frozen model, calibration,
-            and operating thresholds from M5 will be applied without test-time adjustment.</p>
+          <p>Select one category and up to 24 images. A normal-only capture gate checks
+            input fitness before the frozen anomaly model is allowed to run.</p>
         </div>
         <div class="standby-readout" aria-label="Ready-state checks">
           <span><i></i>LOCAL SESSION</span>
@@ -108,9 +108,9 @@
               <span class="decision-pill" id="decision-pill">—</span>
             </div>
             <div class="metric-grid">
+              <div><span>Capture gate</span><strong id="quality-status">—</strong><small id="quality-detail">—</small></div>
               <div><span>Anomaly score</span><strong id="score">—</strong><small id="score-threshold">—</small></div>
               <div><span>Conformal p</span><strong id="p-value">—</strong><small>ALERT ≤ 0.05 / REVIEW ≤ 0.20</small></div>
-              <div><span>Flagged area</span><strong id="area">—</strong><small>PIXELS ABOVE FROZEN THRESHOLD</small></div>
               <div><span>Runtime</span><strong id="runtime">—</strong><small id="runtime-detail">—</small></div>
             </div>
           </div>
@@ -125,7 +125,7 @@
             </div>
             <div class="image-grid">
               <figure><div class="image-label">A / MODEL INPUT</div><img id="preview" alt="Centered model input"><figcaption>Centered square crop · evaluated geometry</figcaption></figure>
-              <figure><div class="image-label">B / ANOMALY FIELD</div><img id="heatmap" alt="Anomaly heatmap overlay"><figcaption>White contour · frozen localization support</figcaption></figure>
+              <figure id="heatmap-figure"><div class="image-label">B / ANOMALY FIELD</div><img id="heatmap" alt="Anomaly heatmap overlay"><figcaption id="heatmap-caption">White contour · frozen localization support</figcaption></figure>
             </div>
           </div>
         </article>
@@ -147,7 +147,7 @@
             </div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>FILE</th><th>CATEGORY</th><th>DECISION</th><th>SCORE</th><th>P-VALUE</th><th>TIME</th></tr></thead>
+                <thead><tr><th>FILE</th><th>CATEGORY</th><th>DECISION</th><th>QUALITY P</th><th>SCORE</th><th>TIME</th></tr></thead>
                 <tbody id="result-rows"></tbody>
               </table>
             </div>

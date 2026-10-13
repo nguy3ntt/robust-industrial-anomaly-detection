@@ -26,7 +26,7 @@ function showError(message) {
 }
 
 function clearError() { $("error").classList.add("hidden"); }
-function formatNumber(value, digits = 4) { return Number(value).toFixed(digits); }
+function formatNumber(value, digits = 4) { return value == null ? "—" : Number(value).toFixed(digits); }
 function formatBytes(bytes) { return `${(bytes / 1024 / 1024).toFixed(0)} MB maximum per image`; }
 
 async function initialize() {
@@ -115,14 +115,14 @@ function renderResults() {
   if (!state.results.length) return;
   $("empty-state").classList.add("hidden");
   $("results").classList.remove("hidden");
-  const counts = { normal: 0, review: 0, anomalous: 0 };
+  const counts = { normal: 0, review: 0, anomalous: 0, recapture: 0 };
   state.results.forEach((result) => { counts[result.decision] += 1; });
-  $("batch-summary").textContent = `${counts.normal} normal · ${counts.review} review · ${counts.anomalous} anomalous`;
+  $("batch-summary").textContent = `${counts.normal} normal · ${counts.review} review · ${counts.anomalous} anomalous · ${counts.recapture} recapture`;
   $("result-rows").innerHTML = state.results.map((result, index) => `
     <tr data-index="${index}">
       <td>${escapeHtml(result.filename)}</td><td>${escapeHtml(result.category)}</td>
       <td><span class="table-decision ${result.decision}">${result.decision}</span></td>
-      <td>${formatNumber(result.anomaly_score)}</td><td>${formatNumber(result.conformal_p)}</td>
+      <td>${formatNumber(result.quality_p)}</td><td>${formatNumber(result.anomaly_score)}</td>
       <td>${formatNumber(result.timing_ms.total, 1)} ms</td>
     </tr>`).join("");
   document.querySelectorAll("#result-rows tr").forEach((row) => row.addEventListener("click", () => selectResult(Number(row.dataset.index))));
@@ -137,14 +137,30 @@ function selectResult(index) {
   const pill = $("decision-pill");
   pill.textContent = result.decision;
   pill.className = `decision-pill ${result.decision}`;
+  $("quality-status").textContent = result.quality_status;
+  $("quality-detail").textContent = result.quality_p == null
+    ? "GATE DISABLED"
+    : `p ${formatNumber(result.quality_p)} / reject ≤ ${formatNumber(result.quality_alpha)} · ${result.quality_contributors.join(" + ")}`;
   $("score").textContent = formatNumber(result.anomaly_score);
-  $("score-threshold").textContent = `95% normal score reference ${formatNumber(result.empirical_score_threshold)}`;
+  $("score-threshold").textContent = result.model_evaluated
+    ? `95% normal score reference ${formatNumber(result.empirical_score_threshold)}`
+    : "NOT RUN / CAPTURE REJECTED";
   $("p-value").textContent = formatNumber(result.conformal_p);
-  $("area").textContent = `${(result.anomalous_area_fraction * 100).toFixed(1)}%`;
   $("runtime").textContent = `${formatNumber(result.timing_ms.total, 1)} ms`;
-  $("runtime-detail").textContent = `Features ${formatNumber(result.timing_ms.feature_extraction, 1)} ms · score ${formatNumber(result.timing_ms.memory_scoring, 1)} ms`;
+  $("runtime-detail").textContent = result.model_evaluated
+    ? `Gate ${formatNumber(result.timing_ms.quality_gate, 1)} ms · features ${formatNumber(result.timing_ms.feature_extraction, 1)} ms · score ${formatNumber(result.timing_ms.memory_scoring, 1)} ms`
+    : `Gate ${formatNumber(result.timing_ms.quality_gate, 1)} ms · inference skipped`;
   $("preview").src = result.preview_data_url;
-  $("heatmap").src = result.heatmap_data_url;
+  $("heatmap-figure").classList.toggle("capture-rejected", !result.model_evaluated);
+  if (result.model_evaluated) {
+    $("heatmap").src = result.heatmap_data_url;
+    $("heatmap").hidden = false;
+    $("heatmap-caption").textContent = `${(result.anomalous_area_fraction * 100).toFixed(1)}% flagged area · white contour marks frozen localization support`;
+  } else {
+    $("heatmap").removeAttribute("src");
+    $("heatmap").hidden = true;
+    $("heatmap-caption").textContent = `Inference withheld · recapture for ${result.quality_contributors.join(" and ")}`;
+  }
   $("limitations").innerHTML = result.warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("");
   document.querySelectorAll("#result-rows tr").forEach((row) => row.classList.toggle("active", Number(row.dataset.index) === index));
 }

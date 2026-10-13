@@ -156,6 +156,10 @@ def run_benchmark(
                 "category": sample.category,
                 "source_label": sample.label,
                 "decision": result.decision,
+                "model_evaluated": result.model_evaluated,
+                "quality_status": result.quality_status,
+                "quality_score": result.quality_score,
+                "quality_p": result.quality_p,
                 "anomaly_score": result.anomaly_score,
                 "conformal_p": result.conformal_p,
                 **{f"{name}_ms": value for name, value in result.timing_ms.items()},
@@ -172,6 +176,7 @@ def run_benchmark(
     total_times = [float(cast(int | float, row["total_ms"])) for row in rows]
     feature_times = [float(cast(int | float, row["feature_extraction_ms"])) for row in rows]
     score_times = [float(cast(int | float, row["memory_scoring_ms"])) for row in rows]
+    quality_times = [float(cast(int | float, row["quality_gate_ms"])) for row in rows]
     footprint = engine.resource_footprint()
     static_root = Path(__file__).with_name("static")
     served_assets = {filename for filename, _content_type in PrototypeHandler.static_files.values()}
@@ -187,6 +192,9 @@ def run_benchmark(
         "p95_total_ms": _percentile(total_times, 0.95),
         "mean_feature_extraction_ms": float(np.mean(feature_times)),
         "mean_memory_scoring_ms": float(np.mean(score_times)),
+        "mean_quality_gate_ms": float(np.mean(quality_times)),
+        "model_evaluated_samples": sum(bool(row["model_evaluated"]) for row in rows),
+        "recapture_samples": sum(row["decision"] == "recapture" for row in rows),
         "sequential_images_per_second": len(rows) / benchmark_seconds,
         "rss_before_bytes": rss_before,
         "rss_after_startup_bytes": rss_after_startup,
@@ -195,10 +203,14 @@ def run_benchmark(
         "static_ui_bytes": static_bytes,
         "runtime_artifacts": footprint,
         "source_m5_run": engine.m5_run.name,
+        "source_quality_run": engine.quality_run.name if engine.quality_run else None,
         "source_images_persisted": False,
     }
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    run_dir = artifact_root / "runs" / f"m6-prototype-benchmark-{timestamp}"
+    benchmark_name = (
+        "m8-prototype-benchmark" if settings.quality_gate_enabled else "m6-prototype-benchmark"
+    )
+    run_dir = artifact_root / "runs" / f"{benchmark_name}-{timestamp}"
     run_dir.mkdir(parents=True, exist_ok=False)
     _atomic_csv(run_dir / "sample_timings.csv", rows)
     _atomic_json(run_dir / "summary.json", summary)
@@ -208,6 +220,7 @@ def run_benchmark(
         "device": device,
         "data_config": str(data_config),
         "source_m5_run": str(engine.m5_run),
+        "source_quality_run": str(engine.quality_run) if engine.quality_run else None,
     }
     _atomic_json(run_dir / "resolved_config.json", resolved)
     metadata = {
@@ -219,6 +232,9 @@ def run_benchmark(
         "audit_sha256": sha256_file(audit_path),
         "data_config_sha256": sha256_file(data_config),
         "source_m5_metadata_sha256": sha256_file(engine.m5_run / "metadata.json"),
+        "source_quality_metadata_sha256": (
+            sha256_file(engine.quality_run / "metadata.json") if engine.quality_run else None
+        ),
         "sample_timings_sha256": sha256_file(run_dir / "sample_timings.csv"),
         "summary_sha256": sha256_file(run_dir / "summary.json"),
         "environment_sha256": sha256_file(run_dir / "environment.json"),

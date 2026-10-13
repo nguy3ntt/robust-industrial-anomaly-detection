@@ -29,6 +29,14 @@ def _result() -> InspectionResult:
         category="candle",
         model="model",
         decision="review",
+        model_evaluated=True,
+        quality_status="pass",
+        quality_score=1.2,
+        quality_p=0.6,
+        quality_alpha=0.02,
+        quality_calibration_samples=100,
+        quality_contributors=("focus/blur", "illumination"),
+        quality_metrics={"brightness": 0.5},
         anomaly_score=0.4,
         conformal_p=0.1,
         anomaly_alpha=0.05,
@@ -55,6 +63,14 @@ def test_m6_configuration_is_local_and_freezes_m5_policy() -> None:
     assert settings.primary_model == "multiscale_augmented_coreset_512"
     assert settings.anomaly_alpha == 0.05
     assert settings.review_alpha == 0.2
+    assert settings.quality_gate_enabled is False
+
+
+def test_m8_configuration_enables_pre_inference_quality_gate() -> None:
+    settings = load_prototype_settings(ROOT / "configs/prototype/m8.yaml")
+
+    assert settings.quality_gate_enabled is True
+    assert settings.quality_experiment == "m8-quality-gate"
 
 
 def test_public_result_can_remove_all_image_content() -> None:

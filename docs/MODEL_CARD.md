@@ -38,6 +38,12 @@ the conformal policy.
 
 ## Decision policy
 
+Before anomaly inference, the M8 configuration applies a category-conditional
+capture-quality gate. It compares eight low-cost capture measurements with a
+robust training-normal reference and calibrates the maximum directional
+deviation using validation normals. `quality p <= 0.02` returns `recapture` and
+skips the backbone, memory search, anomaly decision, and heatmap.
+
 Larger nearest-memory scores are more anomalous. Category-specific upper-tail
 split-conformal p-values use conservative tie handling and a plus-one correction:
 
@@ -66,6 +72,8 @@ The 0.05–0.20 review band lowers automatic-decision risk by 0.07125, 95% CI
 
 - Conformal false-alarm validity is marginal and requires exchangeability with
   clean calibration normals. It is not a guarantee under capture shift.
+- The capture gate is an out-of-profile screen, not proof that an accepted image
+  is correctly framed or that a rejected image contains no product defect.
 - At severe shift, normal FPR reaches 0.8686 for blur, 0.6820 for noise, 0.4696
   for JPEG, and 0.2179 for geometry.
 - Category identity must be known. Current zero-shot category-transfer image
@@ -78,8 +86,10 @@ The 0.05–0.20 review band lowers automatic-decision risk by 0.07125, 95% CI
 
 ## Reproducibility and provenance
 
-The prototype verifies the trusted manifest, M5 calibration outputs, M4 metadata,
-the M4 index manifest, every category index, and the ResNet-18 checkpoint before
-serving. The authoritative calibration run is
+The quality-gated prototype additionally verifies the M8 quality-model hash,
+manifest identity, M5 source identity, input geometry, and category coverage.
+It then verifies the trusted manifest, M5 calibration outputs, M4 metadata, the
+M4 index manifest, every category index, and the ResNet-18 checkpoint before
+serving. The authoritative anomaly calibration run is
 `m5-calibration-full-20260920T110316Z`. See `reports/M5_CALIBRATION.md` for the
 full operating analysis.

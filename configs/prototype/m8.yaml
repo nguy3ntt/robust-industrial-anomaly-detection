@@ -1,0 +1,21 @@
+prototype:
+  name: m8-quality-gated-local-inspector
+  host: 127.0.0.1
+  port: 8765
+  max_upload_bytes: 20971520
+  max_image_pixels: 40000000
+  max_batch_files: 24
+  embed_images_in_reports: false
+
+model:
+  primary_model: multiscale_augmented_coreset_512
+  anomaly_alpha: 0.05
+  review_alpha: 0.20
+
+quality_gate:
+  enabled: true
+  experiment_name: m8-quality-gate
+
+benchmark:
+  samples_per_category: 2
+  warmup_samples: 1

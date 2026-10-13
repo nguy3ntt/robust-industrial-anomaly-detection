@@ -1,0 +1,73 @@
+experiment:
+  name: m8-quality-gate
+  seed: 20260915
+
+source_m5:
+  experiment_name: m5-calibration
+  primary_model: multiscale_augmented_coreset_512
+  decision_method: split_conformal
+  decision_scope: category
+
+quality_gate:
+  image_size: 224
+  alpha: 0.02
+  minimum_fit_samples: 16
+  minimum_calibration_samples: 49
+
+# This is the already-frozen M4 stress protocol. Test images are never used to fit
+# the gate; these conditions only measure what the gate catches after calibration.
+conditions:
+  - id: jpeg_moderate
+    family: jpeg
+    severity: 1
+    parameters: {quality: 70}
+  - id: jpeg_severe
+    family: jpeg
+    severity: 2
+    parameters: {quality: 35}
+  - id: resize_moderate
+    family: resize
+    severity: 1
+    parameters: {scale: 0.75}
+  - id: resize_severe
+    family: resize
+    severity: 2
+    parameters: {scale: 0.50}
+  - id: blur_moderate
+    family: blur
+    severity: 1
+    parameters: {sigma: 1.0}
+  - id: blur_severe
+    family: blur
+    severity: 2
+    parameters: {sigma: 2.0}
+  - id: noise_moderate
+    family: noise
+    severity: 1
+    parameters: {standard_deviation: 0.02}
+  - id: noise_severe
+    family: noise
+    severity: 2
+    parameters: {standard_deviation: 0.05}
+  - id: photometric_moderate
+    family: photometric
+    severity: 1
+    parameters: {brightness: 0.90, contrast: 0.90}
+  - id: photometric_severe
+    family: photometric
+    severity: 2
+    parameters: {brightness: 0.75, contrast: 0.75}
+  - id: geometric_moderate
+    family: geometric
+    severity: 1
+    parameters: {angle_degrees: 2.0, translate_x: 2.0, translate_y: -2.0}
+  - id: geometric_severe
+    family: geometric
+    severity: 2
+    parameters: {angle_degrees: 5.0, translate_x: 5.0, translate_y: -5.0}
+
+quick:
+  train_per_category: 24
+  validation_per_category: 50
+  test_normal_per_category: 12
+  test_anomaly_per_category: 12

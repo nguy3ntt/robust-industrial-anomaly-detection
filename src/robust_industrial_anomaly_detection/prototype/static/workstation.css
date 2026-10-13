@@ -240,6 +240,7 @@ button:disabled { opacity: 0.36; cursor: not-allowed; }
 .decision-pill.normal { color: var(--green); background: color-mix(in srgb, var(--green) 8%, transparent); }
 .decision-pill.review { color: var(--amber); background: color-mix(in srgb, var(--amber) 8%, transparent); }
 .decision-pill.anomalous { color: var(--accent-bright); background: var(--accent-soft); }
+.decision-pill.recapture { color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
 .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 22px; border-top: 1px solid var(--line); }
 .metric-grid > div { min-width: 0; padding: 20px 22px 0; border-left: 1px solid var(--line); }
 .metric-grid > div:first-child { padding-left: 0; border-left: 0; }
@@ -274,6 +275,9 @@ tbody tr.active td:first-child { box-shadow: inset 3px 0 var(--accent); }
 .table-decision.normal { color: var(--green); }
 .table-decision.review { color: var(--amber); }
 .table-decision.anomalous { color: var(--accent-bright); }
+.table-decision.recapture { color: var(--amber); }
+.capture-rejected { border: 1px dashed var(--amber); min-height: 220px; }
+.capture-rejected figcaption { color: var(--amber); padding: 22px; }
 .export-note { margin: 13px 0 0; color: var(--subtle); font: 600 8px/1.5 var(--mono-font); letter-spacing: 0.08em; }
 .error { margin-top: 14px; padding: 14px 17px; color: var(--accent-bright); background: var(--accent-soft); border: 1px solid var(--accent-deep); border-left: 3px solid var(--accent); font: 600 11px/1.5 var(--mono-font); }
 .hidden { display: none !important; }

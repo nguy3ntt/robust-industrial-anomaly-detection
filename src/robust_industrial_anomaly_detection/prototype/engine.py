@@ -33,6 +33,11 @@ from robust_industrial_anomaly_detection.evaluation.calibration import (
     conformal_p_values,
     selective_decisions,
 )
+from robust_industrial_anomaly_detection.prototype.quality import (
+    CaptureQualityModel,
+    evaluate_capture_quality,
+    load_quality_model,
+)
 
 
 class PrototypeError(RuntimeError):
@@ -51,6 +56,8 @@ class PrototypeSettings:
     primary_model: str
     anomaly_alpha: float
     review_alpha: float
+    quality_gate_enabled: bool
+    quality_experiment: str | None
     benchmark_samples_per_category: int
     benchmark_warmup_samples: int
 
@@ -61,19 +68,27 @@ class InspectionResult:
     category: str
     model: str
     decision: str
-    anomaly_score: float
-    conformal_p: float
+    model_evaluated: bool
+    quality_status: str
+    quality_score: float | None
+    quality_p: float | None
+    quality_alpha: float | None
+    quality_calibration_samples: int | None
+    quality_contributors: tuple[str, ...]
+    quality_metrics: Mapping[str, float]
+    anomaly_score: float | None
+    conformal_p: float | None
     anomaly_alpha: float
     review_alpha: float
     empirical_score_threshold: float
     pixel_threshold: float
     calibration_samples: int
-    anomalous_area_fraction: float
+    anomalous_area_fraction: float | None
     input_width: int
     input_height: int
     model_input_size: int
     preview_data_url: str
-    heatmap_data_url: str
+    heatmap_data_url: str | None
     warnings: tuple[str, ...]
     timing_ms: Mapping[str, float]
 
@@ -132,12 +147,20 @@ def load_prototype_settings(path: Path) -> PrototypeSettings:
     prototype = _mapping(root.get("prototype"), "prototype")
     model = _mapping(root.get("model"), "model")
     benchmark = _mapping(root.get("benchmark"), "benchmark")
+    quality_raw = root.get("quality_gate")
+    quality = _mapping(quality_raw, "quality_gate") if quality_raw is not None else {}
     embed = prototype.get("embed_images_in_reports")
     if not isinstance(embed, bool):
         raise PrototypeError("embed_images_in_reports must be boolean")
     port = _positive_integer(prototype, "port")
     if port > 65535:
         raise PrototypeError("port must be at most 65535")
+    quality_enabled = quality.get("enabled", False)
+    if not isinstance(quality_enabled, bool):
+        raise PrototypeError("quality_gate.enabled must be boolean")
+    quality_experiment = quality.get("experiment_name")
+    if quality_enabled and (not isinstance(quality_experiment, str) or not quality_experiment):
+        raise PrototypeError("enabled quality gate requires experiment_name")
     settings = PrototypeSettings(
         name=_string(prototype, "name"),
         host=_string(prototype, "host"),
@@ -149,6 +172,8 @@ def load_prototype_settings(path: Path) -> PrototypeSettings:
         primary_model=_string(model, "primary_model"),
         anomaly_alpha=_probability(model, "anomaly_alpha"),
         review_alpha=_probability(model, "review_alpha"),
+        quality_gate_enabled=quality_enabled,
+        quality_experiment=(cast(str, quality_experiment) if quality_enabled else None),
         benchmark_samples_per_category=_positive_integer(benchmark, "samples_per_category"),
         benchmark_warmup_samples=_positive_integer(benchmark, "warmup_samples"),
     )
@@ -194,6 +219,24 @@ def _find_full_m5_run(artifact_root: Path, explicit: Path | None) -> Path:
         if metadata.get("status") == "complete" and metadata.get("mode") == "full":
             return candidate
     raise PrototypeError("no complete full M5 calibration run is available")
+
+
+def _find_full_quality_run(artifact_root: Path, experiment: str, explicit: Path | None) -> Path:
+    runs_root = (artifact_root / "runs").resolve(strict=True)
+    candidates = (
+        [explicit.resolve(strict=True)]
+        if explicit
+        else sorted(runs_root.glob(f"{experiment}-full-*"), reverse=True)
+    )
+    for candidate in candidates:
+        try:
+            candidate.relative_to(runs_root)
+            metadata = json.loads((candidate / "metadata.json").read_text(encoding="utf-8"))
+        except (ValueError, OSError, json.JSONDecodeError):
+            continue
+        if metadata.get("status") == "complete" and metadata.get("mode") == "full":
+            return candidate
+    raise PrototypeError("no complete full capture-quality run is available")
 
 
 def _safe_filename(value: str) -> str:
@@ -265,8 +308,8 @@ class InspectionEngine:
 
     limitations = (
         "Decision support only; not a certified quality-control device.",
-        "Calibration assumes capture conditions exchangeable with clean validation normals.",
-        "Severe blur, noise, JPEG compression, or geometric shift can cause false alerts.",
+        "Quality and anomaly calibration assume exchangeability with validation normals.",
+        "Rejected captures require recapture or human review; anomaly inference is skipped.",
         "The heatmap localizes unusual evidence but does not diagnose physical root cause.",
     )
 
@@ -277,6 +320,7 @@ class InspectionEngine:
         settings: PrototypeSettings,
         device: str,
         m5_run: Path | None = None,
+        quality_run: Path | None = None,
     ) -> None:
         load_dotenv(project_root / ".env")
         artifact_root_raw = os.environ.get("ANOMALY_ARTIFACT_ROOT")
@@ -287,6 +331,8 @@ class InspectionEngine:
         self.device = device
         self.artifact_root = Path(artifact_root_raw)
         self.m5_run = _find_full_m5_run(self.artifact_root, m5_run)
+        self.quality_run: Path | None = None
+        self.quality_model: CaptureQualityModel | None = None
         self._lock = threading.RLock()
         self._memories: dict[str, ProjectedPatchMemory] = {}
         self._calibration: dict[str, _CategoryCalibration] = {}
@@ -314,6 +360,12 @@ class InspectionEngine:
             raise PrototypeError("M5 summary has no valid M4 source")
         self.m4_run = Path(source_m4_raw).resolve(strict=True)
         self._load_artifact_contract()
+        if settings.quality_gate_enabled:
+            experiment = settings.quality_experiment
+            if experiment is None:  # guarded by configuration validation
+                raise PrototypeError("quality gate experiment is missing")
+            self.quality_run = _find_full_quality_run(self.artifact_root, experiment, quality_run)
+            self._load_quality_contract()
 
         self.extractor = FrozenPyramidResNet18(
             device=device, image_size=self.image_size, batch_size=1
@@ -329,6 +381,30 @@ class InspectionEngine:
         ):
             raise PrototypeError("frozen backbone checkpoint failed integrity verification")
         self.checkpoint_path = checkpoint
+
+    def _load_quality_contract(self) -> None:
+        if self.quality_run is None:
+            raise PrototypeError("quality run is unavailable")
+        try:
+            metadata = cast(
+                dict[str, object],
+                json.loads((self.quality_run / "metadata.json").read_text(encoding="utf-8")),
+            )
+        except (OSError, json.JSONDecodeError) as exc:
+            raise PrototypeError(f"cannot read quality-gate metadata: {exc}") from exc
+        path = self.quality_run / "quality_model.json"
+        if metadata.get("quality_model_sha256") != sha256_file(path):
+            raise PrototypeError("quality model failed integrity verification")
+        if metadata.get("source_m5_metadata_sha256") != sha256_file(self.m5_run / "metadata.json"):
+            raise PrototypeError("quality model does not match the selected M5 run")
+        model = load_quality_model(path)
+        if model.manifest_sha256 != self.m5_metadata.get("manifest_sha256"):
+            raise PrototypeError("quality model used a different trusted manifest")
+        if model.image_size != self.image_size:
+            raise PrototypeError("quality and anomaly models use different input geometry")
+        if set(model.categories) != set(self.categories):
+            raise PrototypeError("quality and anomaly category coverage differs")
+        self.quality_model = model
 
     def _load_artifact_contract(self) -> None:
         for filename in ("calibration_scores.csv", "calibration_parameters.csv"):
@@ -438,6 +514,52 @@ class InspectionEngine:
         decoded, width, height = _decode_image(payload, self.settings)
         fitted = _fit_rgb(decoded, self.image_size)
         preprocess_ms = (time.perf_counter() - total_started) * 1000.0
+        quality_started = time.perf_counter()
+        quality = (
+            evaluate_capture_quality(fitted, category=category, model=self.quality_model)
+            if self.quality_model is not None
+            else None
+        )
+        quality_ms = (time.perf_counter() - quality_started) * 1000.0
+        preview = _png_data_url(fitted)
+        if quality is not None and quality.status == "recapture":
+            total_ms = (time.perf_counter() - total_started) * 1000.0
+            return InspectionResult(
+                filename=_safe_filename(filename),
+                category=category,
+                model=self.settings.primary_model,
+                decision="recapture",
+                model_evaluated=False,
+                quality_status=quality.status,
+                quality_score=quality.score,
+                quality_p=quality.p_value,
+                quality_alpha=quality.alpha,
+                quality_calibration_samples=quality.calibration_samples,
+                quality_contributors=quality.contributors,
+                quality_metrics=quality.metrics,
+                anomaly_score=None,
+                conformal_p=None,
+                anomaly_alpha=self.settings.anomaly_alpha,
+                review_alpha=self.settings.review_alpha,
+                empirical_score_threshold=self._calibration[category].empirical_threshold,
+                pixel_threshold=self._calibration[category].pixel_threshold,
+                calibration_samples=len(self._calibration[category].scores),
+                anomalous_area_fraction=None,
+                input_width=width,
+                input_height=height,
+                model_input_size=self.image_size,
+                preview_data_url=preview,
+                heatmap_data_url=None,
+                warnings=self.limitations,
+                timing_ms={
+                    "preprocess": preprocess_ms,
+                    "quality_gate": quality_ms,
+                    "feature_extraction": 0.0,
+                    "memory_scoring": 0.0,
+                    "rendering": 0.0,
+                    "total": total_ms,
+                },
+            )
         with self._lock:
             feature_started = time.perf_counter()
             pyramid = self.extractor.extract_rgb([fitted])[0]
@@ -468,7 +590,6 @@ class InspectionEngine:
                 dtype=np.float32,
             )
         overlay, anomalous_fraction = _score_overlay(fitted, score_map, calibration.pixel_threshold)
-        preview = _png_data_url(fitted)
         heatmap = _png_data_url(overlay)
         rendering_ms = (time.perf_counter() - rendering_started) * 1000.0
         total_ms = (time.perf_counter() - total_started) * 1000.0
@@ -477,6 +598,16 @@ class InspectionEngine:
             category=category,
             model=self.settings.primary_model,
             decision=decision,
+            model_evaluated=True,
+            quality_status=quality.status if quality is not None else "disabled",
+            quality_score=quality.score if quality is not None else None,
+            quality_p=quality.p_value if quality is not None else None,
+            quality_alpha=quality.alpha if quality is not None else None,
+            quality_calibration_samples=(
+                quality.calibration_samples if quality is not None else None
+            ),
+            quality_contributors=quality.contributors if quality is not None else (),
+            quality_metrics=quality.metrics if quality is not None else {},
             anomaly_score=anomaly_score,
             conformal_p=conformal_p,
             anomaly_alpha=self.settings.anomaly_alpha,
@@ -493,6 +624,7 @@ class InspectionEngine:
             warnings=self.limitations,
             timing_ms={
                 "preprocess": preprocess_ms,
+                "quality_gate": quality_ms,
                 "feature_extraction": feature_ms,
                 "memory_scoring": score_ms,
                 "rendering": rendering_ms,
@@ -510,12 +642,15 @@ class InspectionEngine:
             "device": self.device,
             "anomaly_alpha": self.settings.anomaly_alpha,
             "review_alpha": self.settings.review_alpha,
+            "quality_gate_enabled": self.quality_model is not None,
+            "quality_alpha": self.quality_model.alpha if self.quality_model is not None else None,
             "max_upload_bytes": self.settings.max_upload_bytes,
             "max_batch_files": self.settings.max_batch_files,
             "images_persisted": False,
             "images_embedded_in_reports": False,
             "limitations": self.limitations,
             "source_m5_run": self.m5_run.name,
+            "source_quality_run": self.quality_run.name if self.quality_run is not None else None,
         }
 
     def resource_footprint(self) -> dict[str, int]:
@@ -527,9 +662,18 @@ class InspectionEngine:
             for name in ("calibration_scores.csv", "calibration_parameters.csv")
         )
         checkpoint_bytes = self.checkpoint_path.stat().st_size
+        quality_bytes = (
+            (self.quality_run / "quality_model.json").stat().st_size
+            if self.quality_run is not None
+            else 0
+        )
         return {
             "backbone_checkpoint_bytes": checkpoint_bytes,
             "all_category_index_bytes": indexes,
             "calibration_artifact_bytes": calibration,
-            "total_runtime_artifact_bytes": checkpoint_bytes + indexes + calibration,
+            "quality_gate_artifact_bytes": quality_bytes,
+            "total_runtime_artifact_bytes": checkpoint_bytes
+            + indexes
+            + calibration
+            + quality_bytes,
         }

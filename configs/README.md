@@ -11,6 +11,12 @@ policy. Changes invalidate the trusted manifest until M1 is rerun.
 `prototype/m6.yaml` freezes the loopback server safety limits, deployed M5
 policy, batch bound, and benchmark sampling count for the local inspector.
 
+`experiments/m8-quality-gate.yaml` freezes the category-normal capture features,
+calibration level, M5 decision source, and reused M4 shift ladder.
+
+`prototype/m8.yaml` enables the verified M8 gate ahead of the unchanged M6
+anomaly model. The M6 file remains unchanged for historical reproduction.
+
 `reporting/m7.yaml` pins the completed M2–M6 source runs, metadata hashes,
 required source-file hashes, final output directory, and publication style for
 the deterministic academic/portfolio package reconstruction.
