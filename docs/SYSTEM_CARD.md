@@ -62,6 +62,9 @@ on loopback and should not be reverse-proxied or exposed to a network.
 - Severe blur, noise, compression, geometry change, or unexpected score drift
   should trigger capture investigation or recalibration rather than automatic
   threshold adjustment.
+- Independent KolektorSDD2 validation finds that the current quality gate misses
+  many blur, noise, and framing stress cases despite normal-only recalibration.
+  It screens measured departures; operator capture checks remain necessary.
 
 ## Failure handling
 
@@ -98,6 +101,15 @@ quality artifact adds 48,424 bytes, bringing total runtime artifacts to
 50,014,739 bytes.
 
 ## Operational checklist
+
+The optional M10 inspector retains these safety/privacy contracts and adds
+hash-verified small-region cleanup with region-count/policy/threshold metadata.
+Its 24-input CPU benchmark `m10-prototype-benchmark-20261014T113701Z` records
+73.2 ms median, 106.1 ms p95, and 0.59 ms mean localization stage time (20 neural
+evaluations, four recaptures). Localization time is included in rendering/total
+time. Profiles add 4,018,719 bytes; total runtime artifacts are 54,033,458 bytes.
+These mixed-path measurements do not establish a speed gain over older runs.
+See the [manual verification guide](M10_MANUAL_TESTING.md).
 
 - Keep `.env`, dataset, model artifacts, and reports on approved local storage.
 - Start on the default loopback address.

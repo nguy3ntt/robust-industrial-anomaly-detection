@@ -1,0 +1,29 @@
+dataset:
+  id: ksdd2-20230928
+  name: Kolektor Surface-Defect Dataset 2
+  official_page: https://www.vicos.si/resources/kolektorsdd2/
+  archive_url: https://data.vicos.si/datasets/KSDD/KolektorSDD2.zip
+  license: CC-BY-NC-SA-4.0
+  license_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+  accessed_on: '2026-10-13'
+integrity:
+  archive_bytes: 853126555
+  # Observed from the official HTTPS acquisition; no provider checksum was published.
+  archive_sha256: edcdb486809b24f1d17b785e30c52fafc5999554dd5fe18ddf77b61ceb6f36a8
+  expected_train_normal: 2085
+  expected_train_anomaly: 246
+  expected_test_normal: 894
+  expected_test_anomaly: 110
+  perceptual_max_dhash_distance: 2
+  perceptual_max_mean_centered_mae_uint8: 0.1
+  # Provider ZIP contains two accidental copies of a training image/mask pair.
+  verified_copy_exclusions:
+    'train/10301 (copy).png': train/10301.png
+    'train/10301_GT (copy).png': train/10301_GT.png
+protocol:
+  seed: 20260915
+  validation_fraction: 0.15
+  preserve_official_test: true
+  train_labels: [normal]
+  validation_labels: [normal]
+  geometry: full-frame-bilinear-resize

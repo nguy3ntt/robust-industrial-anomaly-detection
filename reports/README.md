@@ -9,6 +9,19 @@ Public milestone reports:
 - [M6 practical prototype](M6_PROTOTYPE.md)
 - [M7 final evaluation](M7_FINAL_EVALUATION.md)
 - [Conference-style paper](CONFERENCE_PAPER.md)
+- [M8 capture-quality gate](M8_CAPTURE_QUALITY_GATE.md)
+- [M9 independent second-dataset validation](M9_EXTERNAL_VALIDATION.md)
+- [M10 thresholded localization](M10_LOCALIZATION.md)
+
+M10 aggregate tables and source/output hashes are under [`m10/`](m10/).
+Rebuild with `scripts/build_m10_report.py` using `configs/reporting/m10.yaml`.
+Its five-policy comparison keeps visible-defect metrics separate from normal
+empty-mask success and discloses unsuccessful spatial alternatives.
+
+The M9 aggregate metrics and exact source/output hash manifest are under
+[`m9/`](m9/). Rebuild them using `scripts/build_m9_report.py` and the exact run
+pinned in `configs/reporting/m9.yaml`. Dataset images, per-image outcomes, and
+feature banks remain outside this public directory.
 
 The deterministic M7 tables, figures, and provenance manifest are under
 [`m7/`](m7/). Presentation-ready artifacts are generated in `../output/`:

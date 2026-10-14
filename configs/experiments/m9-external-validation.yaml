@@ -1,0 +1,30 @@
+experiment:
+  name: m9-ksdd2-validation
+  seed: 20260915
+  bootstrap_samples: 500
+  confidence: 0.95
+model:
+  image_size: 224
+  localization_size: 56
+  geometry: full-frame-bilinear-resize
+  batch_size: 16
+  bank_size: 512
+  projected_dimension: 64
+  candidate_limit: 4096
+  patch_budget_per_image: 24
+  image_score_fraction: 0.01
+  gaussian_sigma: 4.0
+calibration:
+  anomaly_alpha: 0.05
+  review_alpha: 0.20
+  quality_alpha: 0.02
+  pixel_quantile: 0.995
+source_protocols:
+  robustness_config: configs/experiments/m4-robustness.yaml
+  quality_config: configs/experiments/m8-quality-gate.yaml
+quick:
+  train_normals: 32
+  calibration_normals: 50
+  test_normals: 24
+  test_anomalies: 24
+  bootstrap_samples: 50

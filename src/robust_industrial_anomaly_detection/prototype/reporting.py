@@ -26,6 +26,10 @@ REPORT_FIELDS = (
     "pixel_threshold",
     "calibration_samples",
     "anomalous_area_fraction",
+    "localization_policy",
+    "localization_threshold_units",
+    "localization_low_threshold",
+    "localized_regions",
     "input_width",
     "input_height",
     "model_input_size",
@@ -70,6 +74,8 @@ def build_inspection_report(
                 "quality_alpha",
                 "source_m5_run",
                 "source_quality_run",
+                "source_localization_run",
+                "localization_policy",
             )
             if key in runtime_info
         },

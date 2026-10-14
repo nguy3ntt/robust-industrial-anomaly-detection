@@ -110,6 +110,7 @@ def test_failed_quality_gate_skips_anomaly_inference() -> None:
     engine = InspectionEngine.__new__(InspectionEngine)
     engine.settings = load_prototype_settings(ROOT / "configs/prototype/m8.yaml")
     engine.image_size = 64
+    engine._localizations = {}
     engine.quality_model = CaptureQualityModel(
         schema_version=1,
         image_size=64,

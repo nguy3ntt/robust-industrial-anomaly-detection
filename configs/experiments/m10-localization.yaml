@@ -1,0 +1,33 @@
+experiment:
+  name: m10-localization
+  seed: 20260915
+  bootstrap_samples: 1000
+  confidence: 0.95
+localization:
+  primary_policy: raw_cleaned
+  high_quantile: 0.995
+  low_quantile: 0.99
+  normal_pixel_budget: 0.005
+  minimum_region_fraction: 0.0003
+  scale_floor_fraction: 0.1
+  fit_normals_cap: 256
+  batch_size: 16
+  threshold_search_steps: 24
+sources:
+  visa_m5_run: m5-calibration-full-20260920T110316Z
+  ksdd2_m9_run: m9-ksdd2-validation-full-20261013T045835Z
+  robustness_config: configs/experiments/m4-robustness.yaml
+  visa_config: configs/data/visa.yaml
+  ksdd2_config: configs/data/ksdd2.yaml
+conditions:
+  - clean
+  - jpeg_severe
+  - blur_severe
+  - noise_severe
+  - geometric_severe
+quick:
+  fit_normals: 24
+  calibration_normals: 24
+  test_normals: 12
+  test_anomalies: 12
+  bootstrap_samples: 100

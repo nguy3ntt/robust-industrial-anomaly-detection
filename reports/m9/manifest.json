@@ -1,0 +1,14 @@
+{
+  "dataset_manifest_sha256": "977cfb98dd386b73ca73505b0e3940ed6ac9ad363f1d2451211d1a24bcd96ffc",
+  "evaluation_config_sha256": "49cc9899e12b0018c9cdad45838693ebc6117cd24b61b68a9262cbbb21c57a0e",
+  "output_hashes": {
+    "reports/M9_EXTERNAL_VALIDATION.md": "b7a3fc313c0a5ffa5b8a8580540382e712f1a686e4f5b883bc5ee73035bf7eec",
+    "reports/m9/external_metrics.csv": "eed3d53b72a927324abf939b9f71e029699e06b8a9ae21c5ddd3045f08ffb7ef"
+  },
+  "package_sha256": "1c11901dbdeb70d8653bb8eff745b074d13f45ca09b21761ed056a05972b97c9",
+  "schema_version": 1,
+  "source_code_sha256": "b5547512282c70fe5c4f8a73f019cbf9c32557f43422089325d7c29adaeadb2c",
+  "source_images_published": false,
+  "source_metadata_sha256": "f9be5407a170eb354e1398d8cc4922804f5a84ac0d00b3e40016f5a6875b512d",
+  "source_run": "m9-ksdd2-validation-full-20261013T045835Z"
+}

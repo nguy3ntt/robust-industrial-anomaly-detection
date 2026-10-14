@@ -333,6 +333,74 @@ The full run rejects 1.98% of clean normals and 89.13% of shifted normals,
 intercepting 93.22% of shifted M5 false alerts. The serialized gate is 48 KB and
 adds 2.46 ms mean CPU time in the deterministic 24-image benchmark.
 
+## Validate on a second dataset
+
+M9 evaluates the fixed normal-only method on KolektorSDD2, a separate industrial
+surface-defect dataset with an official split and pixel masks. The official
+archive downloads directly without an account. Its CC BY-NC-SA 4.0 licence fits
+noncommercial academic/portfolio use; dataset images remain outside Git.
+
+```powershell
+# Acquire the pinned official archive, safely extract it, and audit every pair.
+uv run --extra cpu python scripts/prepare_ksdd2.py
+
+# Check the whole workflow on 32 fit normals, 50 calibration normals, and 48 test images.
+uv run --extra cpu python scripts/run_m9_external_validation.py --quick
+
+# Reproduce both 512-entry models over all official test images and frozen shifts.
+uv run --extra cpu python scripts/run_m9_external_validation.py
+
+# Rebuild the aggregate public report from its exact source-run hash pin.
+uv run --extra cpu python scripts/build_m9_report.py
+```
+
+The study learns its normal memories and calibration references from the second
+dataset's training normals. It preserves all 1,004 official test images and
+excludes all 246 labelled training defects from learning. Full-frame resizing
+retains the ends of the narrow surface strips; localization is explicitly
+reported on a 56x56 grid. Interrupted full runs resume with `--resume <run-dir>`
+after checking inputs, training artifacts, and condition checkpoint hashes.
+
+See the [external validation report](reports/M9_EXTERNAL_VALIDATION.md),
+[frozen M9 protocol](docs/M9_EVALUATION_PROTOCOL.md), and
+[KolektorSDD2 dataset card](docs/datasets/KSDD2.md). The local browser inspector
+continues to serve its verified VisA categories; M9 is an independent research
+evaluation with its own normal references.
+
+On the second dataset, the augmented detector achieves clean image AUROC 0.9393
+and normal FPR 2.68%. Augmentation reduces mean shifted normal FPR from 34.87% to
+25.99%, but the capture gate intercepts only 21.90% of shifted false alerts.
+This exposes a domain-specific limitation of the current gate; its strong VisA
+interception result does not extend uniformly to other industrial surfaces.
+
+## Thresholded localization
+
+M10 adds small-region cleanup at the original normal-calibrated pixel threshold.
+It removes isolated components smaller than 16 pixels on the VisA 224x224 map;
+the image score, conformal decision, continuous heatmap, and capture gate stay
+unchanged. The overlay and reported flagged area use the same evaluated binary
+support. Historical M6/M8 configurations retain their original contour policy.
+
+```powershell
+# Start the quality-gated inspector with cleaned contours.
+.venv\Scripts\python.exe scripts/run_m10_prototype.py --port 8766
+```
+
+The complete five-policy comparison covers every official VisA and KSDD2 test
+image under clean and four severe capture shifts. VisA macro normal-image contour
+incidence falls from 78.17% to 73.43%, while visible-defect IoU changes only from
+0.1194 to 0.1196 (exploratory interval includes zero). Cleanup is unchanged on
+KSDD2's 56x56 grid. Spatial normalization and seeded growth reduced foreground
+overlap and are research comparisons, not the deployed policy. This is a modest
+contour refinement, not a major accuracy gain or image false-alarm reduction.
+
+See the [localization report](reports/M10_LOCALIZATION.md),
+[protocol](docs/M10_LOCALIZATION_PROTOCOL.md), and
+[manual verification guide](docs/M10_MANUAL_TESTING.md). Reproduce the full
+evaluation with `scripts/run_m10_localization.py` and rebuild the hash-pinned
+aggregate evidence with `scripts/build_m10_report.py` using the same Python
+environment. No dataset images or numeric model artifacts are published.
+
 ## Final academic and portfolio package
 
 M7 reconstructs the public evidence from hash-pinned completed M2–M6 runs. It
@@ -359,7 +427,7 @@ and [caption-led demo](output/video/robust-industrial-anomaly-detection-demo.mp4
 
 ## Status
 
-M0 through M8 are complete. The official VisA archive was downloaded directly,
+M0 through M10 are complete. The official VisA archive was downloaded directly,
 verified against SHA-256, extracted through a traversal-safe atomic process,
 and audited across all 10,821 samples. The canonical manifest preserves the
 official test set and derives validation only from grouped training-normal

@@ -4,10 +4,12 @@ No data may enter an experiment until all applicable items below are complete.
 
 ## Source and licence
 
-- Acquire data only from the official VisA project archive.
+- Acquire VisA from its official project archive and KolektorSDD2 from the
+  official ViCoS archive specified in their separate dataset configurations.
 - Read and record the dataset licence, version, source URL, and access date.
 - Keep the original archive unchanged until its checksum is recorded.
-- Retain the required VisA attribution in reports and demonstrations.
+- Retain the required attribution for each dataset in reports and demonstrations.
+  KolektorSDD2 has a separate CC BY-NC-SA 4.0 noncommercial licence.
 
 ## Storage and privacy
 
@@ -20,7 +22,7 @@ No data may enter an experiment until all applicable items below are complete.
 
 ## Split and audit
 
-- Preserve the official one-class test set exactly.
+- Preserve each provider's official test set exactly.
 - Derive validation only from official training-normal images using the recorded
   deterministic policy.
 - Detect exact and perceptual near-duplicates before training.

@@ -33,6 +33,11 @@ from robust_industrial_anomaly_detection.evaluation.calibration import (
     conformal_p_values,
     selective_decisions,
 )
+from robust_industrial_anomaly_detection.prototype.localization import (
+    LocalizationModel,
+    load_localization_model,
+    localization_support,
+)
 from robust_industrial_anomaly_detection.prototype.quality import (
     CaptureQualityModel,
     evaluate_capture_quality,
@@ -60,6 +65,7 @@ class PrototypeSettings:
     quality_experiment: str | None
     benchmark_samples_per_category: int
     benchmark_warmup_samples: int
+    localization_experiment: str | None = None
 
 
 @dataclass(frozen=True)
@@ -91,6 +97,10 @@ class InspectionResult:
     heatmap_data_url: str | None
     warnings: tuple[str, ...]
     timing_ms: Mapping[str, float]
+    localization_policy: str = "baseline_global"
+    localization_threshold_units: str = "memory-distance"
+    localization_low_threshold: float | None = None
+    localized_regions: int | None = None
 
     def public_dict(self, *, include_images: bool = True) -> dict[str, object]:
         payload = asdict(self)
@@ -149,6 +159,10 @@ def load_prototype_settings(path: Path) -> PrototypeSettings:
     benchmark = _mapping(root.get("benchmark"), "benchmark")
     quality_raw = root.get("quality_gate")
     quality = _mapping(quality_raw, "quality_gate") if quality_raw is not None else {}
+    localization_raw = root.get("localization")
+    localization = (
+        _mapping(localization_raw, "localization") if localization_raw is not None else {}
+    )
     embed = prototype.get("embed_images_in_reports")
     if not isinstance(embed, bool):
         raise PrototypeError("embed_images_in_reports must be boolean")
@@ -176,6 +190,9 @@ def load_prototype_settings(path: Path) -> PrototypeSettings:
         quality_experiment=(cast(str, quality_experiment) if quality_enabled else None),
         benchmark_samples_per_category=_positive_integer(benchmark, "samples_per_category"),
         benchmark_warmup_samples=_positive_integer(benchmark, "warmup_samples"),
+        localization_experiment=(
+            _string(localization, "experiment_name") if localization else None
+        ),
     )
     if settings.anomaly_alpha > settings.review_alpha:
         raise PrototypeError("anomaly_alpha cannot exceed review_alpha")
@@ -236,7 +253,7 @@ def _find_full_quality_run(artifact_root: Path, experiment: str, explicit: Path 
             continue
         if metadata.get("status") == "complete" and metadata.get("mode") == "full":
             return candidate
-    raise PrototypeError("no complete full capture-quality run is available")
+    raise PrototypeError(f"no complete full {experiment} run is available")
 
 
 def _safe_filename(value: str) -> str:
@@ -288,7 +305,10 @@ def _png_data_url(rgb: np.ndarray) -> str:
 
 
 def _score_overlay(
-    image: np.ndarray, score_map: np.ndarray, pixel_threshold: float
+    image: np.ndarray,
+    score_map: np.ndarray,
+    pixel_threshold: float,
+    support: np.ndarray | None = None,
 ) -> tuple[np.ndarray, float]:
     minimum = float(np.min(score_map))
     upper = max(float(np.quantile(score_map, 0.995)), pixel_threshold)
@@ -297,10 +317,16 @@ def _score_overlay(
     heat_bgr = cv2.applyColorMap((normalized * 255).astype(np.uint8), cv2.COLORMAP_TURBO)
     heat_rgb = cv2.cvtColor(heat_bgr, cv2.COLOR_BGR2RGB)
     overlay = cv2.addWeighted(image, 0.56, heat_rgb, 0.44, 0.0)
-    support = (score_map > pixel_threshold).astype(np.uint8)
-    contours, _ = cv2.findContours(support, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    binary_support = (
+        score_map > pixel_threshold if support is None else np.asarray(support, dtype=bool)
+    )
+    if binary_support.shape != score_map.shape:
+        raise PrototypeError("overlay support does not match evidence geometry")
+    contours, _ = cv2.findContours(
+        binary_support.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
     cv2.drawContours(overlay, contours, -1, (255, 255, 255), 1, cv2.LINE_AA)
-    return overlay, float(np.mean(support))
+    return overlay, float(np.mean(binary_support))
 
 
 class InspectionEngine:
@@ -321,6 +347,7 @@ class InspectionEngine:
         device: str,
         m5_run: Path | None = None,
         quality_run: Path | None = None,
+        localization_run: Path | None = None,
     ) -> None:
         load_dotenv(project_root / ".env")
         artifact_root_raw = os.environ.get("ANOMALY_ARTIFACT_ROOT")
@@ -333,6 +360,8 @@ class InspectionEngine:
         self.m5_run = _find_full_m5_run(self.artifact_root, m5_run)
         self.quality_run: Path | None = None
         self.quality_model: CaptureQualityModel | None = None
+        self.localization_run: Path | None = None
+        self._localizations: dict[str, LocalizationModel] = {}
         self._lock = threading.RLock()
         self._memories: dict[str, ProjectedPatchMemory] = {}
         self._calibration: dict[str, _CategoryCalibration] = {}
@@ -366,6 +395,11 @@ class InspectionEngine:
                 raise PrototypeError("quality gate experiment is missing")
             self.quality_run = _find_full_quality_run(self.artifact_root, experiment, quality_run)
             self._load_quality_contract()
+        if settings.localization_experiment is not None:
+            self.localization_run = _find_full_quality_run(
+                self.artifact_root, settings.localization_experiment, localization_run
+            )
+            self._load_localization_contract()
 
         self.extractor = FrozenPyramidResNet18(
             device=device, image_size=self.image_size, batch_size=1
@@ -381,6 +415,39 @@ class InspectionEngine:
         ):
             raise PrototypeError("frozen backbone checkpoint failed integrity verification")
         self.checkpoint_path = checkpoint
+
+    def _load_localization_contract(self) -> None:
+        if self.localization_run is None:
+            raise PrototypeError("localization run is unavailable")
+        metadata = _mapping(
+            json.loads((self.localization_run / "metadata.json").read_text("utf-8")),
+            "localization metadata",
+        )
+        if metadata.get("visa_m5_metadata_sha256") != sha256_file(self.m5_run / "metadata.json"):
+            raise PrototypeError("localization model does not match the selected M5 source")
+        output_hashes = _mapping(metadata.get("output_hashes"), "localization output hashes")
+        summary_path = self.localization_run / "summary.json"
+        if output_hashes.get("summary.json") != sha256_file(summary_path):
+            raise PrototypeError("localization summary failed integrity verification")
+        summary = _mapping(json.loads(summary_path.read_text("utf-8")), "localization summary")
+        if summary.get("primary_policy") != "raw_cleaned":
+            raise PrototypeError("unsupported deployed localization policy")
+        for category in self.categories:
+            relative = f"units/visa/{category}/localization.npz"
+            path = self.localization_run / relative
+            if not path.is_file() or output_hashes.get(relative) != sha256_file(path):
+                raise PrototypeError(f"localization artifact failed verification: {category}")
+            model = load_localization_model(path)
+            if (
+                model.center.shape != (self.image_size, self.image_size)
+                or model.provenance.get("manifest_sha256")
+                != self.m5_metadata.get("manifest_sha256")
+                or model.provenance.get("source_index_sha256")
+                != sha256_file(self._index_paths[category])
+                or model.provenance.get("geometry") != "center-crop"
+            ):
+                raise PrototypeError(f"localization source/geometry mismatch: {category}")
+            self._localizations[category] = model
 
     def _load_quality_contract(self) -> None:
         if self.quality_run is None:
@@ -559,6 +626,8 @@ class InspectionEngine:
                     "rendering": 0.0,
                     "total": total_ms,
                 },
+                localization_policy=("raw_cleaned" if self._localizations else "baseline_global"),
+                localization_threshold_units="not-evaluated",
             )
         with self._lock:
             feature_started = time.perf_counter()
@@ -589,7 +658,27 @@ class InspectionEngine:
                 cv2.GaussianBlur(score_map, (0, 0), sigmaX=self.gaussian_sigma),
                 dtype=np.float32,
             )
-        overlay, anomalous_fraction = _score_overlay(fitted, score_map, calibration.pixel_threshold)
+        localization_started = time.perf_counter()
+        localization_model = self._localizations.get(category)
+        pixel_threshold = calibration.pixel_threshold
+        low_threshold: float | None = None
+        support: np.ndarray | None = None
+        region_count: int | None = None
+        if localization_model is not None:
+            score_map, support, pixel_threshold = localization_support(
+                score_map,
+                localization_model,
+                "raw_cleaned",
+                baseline_threshold=calibration.pixel_threshold,
+            )
+            low_threshold = calibration.pixel_threshold
+            region_count = (
+                int(cv2.connectedComponents(support.astype(np.uint8), connectivity=8)[0]) - 1
+            )
+        localization_ms = (time.perf_counter() - localization_started) * 1000.0
+        overlay, anomalous_fraction = _score_overlay(
+            fitted, score_map, pixel_threshold, support=support
+        )
         heatmap = _png_data_url(overlay)
         rendering_ms = (time.perf_counter() - rendering_started) * 1000.0
         total_ms = (time.perf_counter() - total_started) * 1000.0
@@ -613,7 +702,7 @@ class InspectionEngine:
             anomaly_alpha=self.settings.anomaly_alpha,
             review_alpha=self.settings.review_alpha,
             empirical_score_threshold=calibration.empirical_threshold,
-            pixel_threshold=calibration.pixel_threshold,
+            pixel_threshold=pixel_threshold,
             calibration_samples=len(calibration.scores),
             anomalous_area_fraction=anomalous_fraction,
             input_width=width,
@@ -628,8 +717,13 @@ class InspectionEngine:
                 "feature_extraction": feature_ms,
                 "memory_scoring": score_ms,
                 "rendering": rendering_ms,
+                "localization": localization_ms,
                 "total": total_ms,
             },
+            localization_policy="raw_cleaned" if localization_model else "baseline_global",
+            localization_threshold_units=("memory-distance"),
+            localization_low_threshold=low_threshold,
+            localized_regions=region_count,
         )
 
     def runtime_info(self) -> dict[str, object]:
@@ -651,6 +745,10 @@ class InspectionEngine:
             "limitations": self.limitations,
             "source_m5_run": self.m5_run.name,
             "source_quality_run": self.quality_run.name if self.quality_run is not None else None,
+            "source_localization_run": self.localization_run.name
+            if self.localization_run
+            else None,
+            "localization_policy": "raw_cleaned" if self._localizations else "baseline_global",
         }
 
     def resource_footprint(self) -> dict[str, int]:
@@ -667,13 +765,23 @@ class InspectionEngine:
             if self.quality_run is not None
             else 0
         )
+        localization_bytes = (
+            sum(
+                (self.localization_run / f"units/visa/{category}/localization.npz").stat().st_size
+                for category in self.categories
+            )
+            if self.localization_run
+            else 0
+        )
         return {
             "backbone_checkpoint_bytes": checkpoint_bytes,
             "all_category_index_bytes": indexes,
             "calibration_artifact_bytes": calibration,
             "quality_gate_artifact_bytes": quality_bytes,
+            "localization_artifact_bytes": localization_bytes,
             "total_runtime_artifact_bytes": checkpoint_bytes
             + indexes
             + calibration
-            + quality_bytes,
+            + quality_bytes
+            + localization_bytes,
         }

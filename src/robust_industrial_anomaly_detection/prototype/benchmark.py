@@ -177,6 +177,7 @@ def run_benchmark(
     feature_times = [float(cast(int | float, row["feature_extraction_ms"])) for row in rows]
     score_times = [float(cast(int | float, row["memory_scoring_ms"])) for row in rows]
     quality_times = [float(cast(int | float, row["quality_gate_ms"])) for row in rows]
+    localization_times = [float(cast(int | float, row.get("localization_ms", 0.0))) for row in rows]
     footprint = engine.resource_footprint()
     static_root = Path(__file__).with_name("static")
     served_assets = {filename for filename, _content_type in PrototypeHandler.static_files.values()}
@@ -193,6 +194,7 @@ def run_benchmark(
         "mean_feature_extraction_ms": float(np.mean(feature_times)),
         "mean_memory_scoring_ms": float(np.mean(score_times)),
         "mean_quality_gate_ms": float(np.mean(quality_times)),
+        "mean_localization_ms": float(np.mean(localization_times)),
         "model_evaluated_samples": sum(bool(row["model_evaluated"]) for row in rows),
         "recapture_samples": sum(row["decision"] == "recapture" for row in rows),
         "sequential_images_per_second": len(rows) / benchmark_seconds,
@@ -204,11 +206,18 @@ def run_benchmark(
         "runtime_artifacts": footprint,
         "source_m5_run": engine.m5_run.name,
         "source_quality_run": engine.quality_run.name if engine.quality_run else None,
+        "source_localization_run": engine.localization_run.name
+        if engine.localization_run
+        else None,
         "source_images_persisted": False,
     }
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     benchmark_name = (
-        "m8-prototype-benchmark" if settings.quality_gate_enabled else "m6-prototype-benchmark"
+        "m10-prototype-benchmark"
+        if settings.localization_experiment
+        else "m8-prototype-benchmark"
+        if settings.quality_gate_enabled
+        else "m6-prototype-benchmark"
     )
     run_dir = artifact_root / "runs" / f"{benchmark_name}-{timestamp}"
     run_dir.mkdir(parents=True, exist_ok=False)
@@ -221,6 +230,9 @@ def run_benchmark(
         "data_config": str(data_config),
         "source_m5_run": str(engine.m5_run),
         "source_quality_run": str(engine.quality_run) if engine.quality_run else None,
+        "source_localization_run": str(engine.localization_run)
+        if engine.localization_run
+        else None,
     }
     _atomic_json(run_dir / "resolved_config.json", resolved)
     metadata = {
@@ -232,6 +244,11 @@ def run_benchmark(
         "audit_sha256": sha256_file(audit_path),
         "data_config_sha256": sha256_file(data_config),
         "source_m5_metadata_sha256": sha256_file(engine.m5_run / "metadata.json"),
+        "source_localization_metadata_sha256": (
+            sha256_file(engine.localization_run / "metadata.json")
+            if engine.localization_run
+            else None
+        ),
         "source_quality_metadata_sha256": (
             sha256_file(engine.quality_run / "metadata.json") if engine.quality_run else None
         ),

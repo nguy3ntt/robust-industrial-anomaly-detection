@@ -1,0 +1,12 @@
+{
+  "output_hashes": {
+    "reports/M10_LOCALIZATION.md": "88000371750db553d2c161e070a56addaa6a25253172aa932c47d737c525e896",
+    "reports/m10/category_metrics.csv": "622661fc85452744af31446c45cada39f7e259cc539e5f2b7d03fca7f8e09c65",
+    "reports/m10/macro_metrics.csv": "e22002d17917e1173d9459a8bdd1342d2b221225d2eb7aa5b6ad7ac5e423570f"
+  },
+  "package_sha256": "c095cec6d6fc1faf69766172f7ca0ab9ff3ce5837ec9da981ef61319c8f93537",
+  "schema_version": 1,
+  "source_images_published": false,
+  "source_metadata_sha256": "43fa655f235282152cfa29dae68acb30c608d5106858012b5e9ea8dc1a2c158b",
+  "source_run": "m10-localization-full-20261014T113141Z"
+}

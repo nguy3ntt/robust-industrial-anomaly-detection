@@ -10,15 +10,16 @@ from robust_industrial_anomaly_detection.prototype.engine import (
 from robust_industrial_anomaly_detection.prototype.server import serve
 
 
-def main() -> int:
+def main(default_config: Path = Path("configs/prototype/m8.yaml")) -> int:
     parser = argparse.ArgumentParser(description="Run the quality-gated local inspector")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--m5-run", type=Path)
     parser.add_argument("--quality-run", type=Path)
+    parser.add_argument("--localization-run", type=Path)
     parser.add_argument("--host")
     parser.add_argument("--port", type=int)
     parser.add_argument("--open-browser", action="store_true")
-    parser.add_argument("--config", type=Path, default=Path("configs/prototype/m8.yaml"))
+    parser.add_argument("--config", type=Path, default=default_config)
     arguments = parser.parse_args()
     project_root = Path(__file__).resolve().parents[1]
     settings = load_prototype_settings((project_root / arguments.config).resolve())
@@ -28,6 +29,7 @@ def main() -> int:
         device=arguments.device,
         m5_run=arguments.m5_run,
         quality_run=arguments.quality_run,
+        localization_run=arguments.localization_run,
     )
     serve(
         engine,

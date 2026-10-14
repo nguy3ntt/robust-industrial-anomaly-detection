@@ -70,6 +70,24 @@ The 0.05–0.20 review band lowers automatic-decision risk by 0.07125, 95% CI
 
 ## Known limitations
 
+M10 optionally removes sub-16-pixel isolated components from the original VisA
+224x224 thresholded support, without changing continuous evidence or image
+decisions. Clean normal-image contour incidence drops from 78.17% to 73.43%,
+while foreground IoU changes only from 0.1194 to 0.1196; the exploratory macro
+interval includes zero. Small-defect recall can decrease. KSDD2 cleanup is
+unchanged at its 56x56 grid. Spatial normalization/growth lost foreground
+overlap and are not deployed. See [M10 localization](../reports/M10_LOCALIZATION.md).
+This finding also distinguishes binary defect overlap from previously reported
+all-image IoU, which can reward empty-normal masks.
+
+Independent KolektorSDD2 validation of the same model recipe, with normal-only
+local memories/calibration, achieves clean image AUROC 0.9393 and normal FPR
+2.68%. However, its locally calibrated capture gate intercepts only 21.90% of
+shifted false alerts and often misses blur/geometry failures. The gate's VisA
+result must not be generalized to other product or capture domains. See
+[M9 external validation](../reports/M9_EXTERNAL_VALIDATION.md) for the complete
+paired-model and operating-point results and the different full-frame geometry.
+
 - Conformal false-alarm validity is marginal and requires exchangeability with
   clean calibration normals. It is not a guarantee under capture shift.
 - The capture gate is an out-of-profile screen, not proof that an accepted image
@@ -93,3 +111,9 @@ M4 index manifest, every category index, and the ResNet-18 checkpoint before
 serving. The authoritative anomaly calibration run is
 `m5-calibration-full-20260920T110316Z`. See `reports/M5_CALIBRATION.md` for the
 full operating analysis.
+
+The M10 configuration also verifies the source M5 identity, summary, every
+category localization profile hash, memory identity, manifest, and center-crop
+geometry before serving. The evaluated support function is shared with live
+contours and flagged-area reporting. M6/M8 configurations preserve their
+historical contour behavior.
