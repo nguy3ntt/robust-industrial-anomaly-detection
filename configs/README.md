@@ -32,3 +32,13 @@ component area, bounded growth, bootstrap reporting, source runs, and severe
 conditions. `prototype/m10.yaml` enables the verified cleanup policy alongside
 the unchanged M8 gate and M5 image decision. `reporting/m10.yaml` pins the exact
 completed full comparison and metadata hash for aggregate reconstruction.
+
+`experiments/m11-encoder-comparison.yaml` freezes the matched ResNet-18/
+ConvNeXt-Tiny normal budget, memory settings, common localization grid,
+calibration levels, severe conditions, and resource sampling. The comparison
+is offline and does not alter the prototype configs. Official checkpoint URLs
+and full observed hashes are fixed in `baselines/encoders.py`; prepare/check
+local numeric weights with `scripts/prepare_m11_encoders.py`.
+`reporting/m11.yaml` pins the completed 130-row study and metadata hash. The
+publisher verifies all committed outputs, declared weight/budget identities,
+complete category/condition coverage, and all 3,166 official test images.

@@ -1,0 +1,18 @@
+{
+  "output_hashes": {
+    "reports/M11_ENCODER_COMPARISON.md": "fae37053fa3f8ac789abd1b758e92a18164e643e5634e5fe3bcf67925b1588b8",
+    "reports/m11/category_metrics.csv": "48519b3b3154e16cec25b3d0ae9cd9c655c2e8d514911e2e22234ca3b5edd2ec",
+    "reports/m11/macro_deltas.csv": "7ee507292ab939f7f362b203bba4f99cbbfb840ab872a25213fdcd404a59c4e5",
+    "reports/m11/macro_metrics.csv": "528da0e53aca16f654e153064124aa20d388690832bb6e7a987adb596c5d7efa",
+    "reports/m11/mask_visibility.csv": "9756dd769feac5fa06cc69561fa207d27abd9634557a497f9baa81dc7ded8588",
+    "reports/m11/paired_comparisons.csv": "d5f31126ca8b43934fd1b41ea825531321d9c7277386b3d790fdbdf8aba63c77",
+    "reports/m11/resources.csv": "df27b3f2220b362208dac8bc1f5c8dffcdab49ad0a098548f66aa8d86f983c0f",
+    "reports/m11/severe_operating_summary.csv": "b2fd446c29c759b52defb18defc4bc48370f3eeeb6452494fbe0b56b802fc99d"
+  },
+  "package_sha256": "9d62d190e57010604609141c43620817bc5b5c19c44d793793c4bf8ce2e3481b",
+  "schema_version": 1,
+  "source_images_published": false,
+  "source_metadata_sha256": "25d8df6084ce3216823dee67e39a56901c9aa816a3106aa58a2cf65680881f5a",
+  "source_run": "m11-encoder-comparison-full-20261015T005134Z",
+  "weights_published": false
+}

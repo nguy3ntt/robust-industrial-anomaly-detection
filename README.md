@@ -401,6 +401,44 @@ evaluation with `scripts/run_m10_localization.py` and rebuild the hash-pinned
 aggregate evidence with `scripts/build_m10_report.py` using the same Python
 environment. No dataset images or numeric model artifacts are published.
 
+## Modern encoder comparison
+
+M11 compares frozen ResNet-18 with ConvNeXt-Tiny using the existing local
+environment. Both receive the same normal-training IDs (at most 256/category),
+512-entry memory budget, augmentation policy, calibration data, and official
+test images. It measures clean and severe-shift detection, localization,
+conformal operating behavior, and cost across VisA and KolektorSDD2. This is a
+research comparison; it does not automatically replace the live M10 inspector.
+
+```powershell
+# Check/download the official, hash-pinned encoder weights once.
+.venv\Scripts\python.exe scripts/prepare_m11_encoders.py
+
+# Verify the workflow on a small real-data subset.
+.venv\Scripts\python.exe scripts/run_m11_encoder_comparison.py --quick --dataset visa --category candle
+
+# Reproduce the complete matched-budget comparison (CPU by default).
+.venv\Scripts\python.exe scripts/run_m11_encoder_comparison.py
+```
+
+No new account or Python dependency is required; ConvNeXt's local checkpoint
+adds about 109 MiB. Interrupted studies reuse verified fit and condition
+checkpoints with `--resume <run-directory>` and the same settings. All official
+test images remain intact, while a common 56x56 localization grid and bounded
+normal fit budget distinguish this study from historical M5/M9/M10 numbers.
+See the [fixed encoder protocol](docs/M11_ENCODER_PROTOCOL.md) and
+[manual verification guide](docs/M11_MANUAL_TESTING.md).
+
+The full matched-budget study is complete: clean VisA macro image AUROC is
+0.8668 for ResNet versus 0.8344 for ConvNeXt, and KSDD2 is 0.9354 versus 0.8178.
+ConvNeXt also loses clean defect overlap and raises measured VisA single-image
+CPU latency from 33.9 to 54.1 ms. It reduces KSDD2 severe-shift false alarms,
+but with lower confident defect recall. The evidence does not justify replacing
+the current ResNet inspector. See the [complete encoder comparison](reports/M11_ENCODER_COMPARISON.md),
+including per-category losses/gains, intervals, mask-visibility limits, and cost.
+Rebuild its aggregate evidence with `scripts/build_m11_report.py`; the exact
+completed source is pinned in `configs/reporting/m11.yaml`.
+
 ## Final academic and portfolio package
 
 M7 reconstructs the public evidence from hash-pinned completed M2–M6 runs. It
@@ -427,7 +465,7 @@ and [caption-led demo](output/video/robust-industrial-anomaly-detection-demo.mp4
 
 ## Status
 
-M0 through M10 are complete. The official VisA archive was downloaded directly,
+M0 through M11 are complete. The official VisA archive was downloaded directly,
 verified against SHA-256, extracted through a traversal-safe atomic process,
 and audited across all 10,821 samples. The canonical manifest preserves the
 official test set and derives validation only from grouped training-normal

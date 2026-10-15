@@ -70,6 +70,18 @@ The 0.05–0.20 review band lowers automatic-decision risk by 0.07125, 95% CI
 
 ## Known limitations
 
+M11 compared a frozen ConvNeXt-Tiny substitution under matched normal samples,
+memory capacity, calibration, and geometry. Clean VisA image AUROC falls from
+0.8668 to 0.8344 and KSDD2 from 0.9354 to 0.8178; clean foreground IoU also
+falls on both domains. The larger encoder is not deployed. Its lower shifted
+KSDD2 false-alarm rate comes with lower confident defect recall, not a uniform
+improvement. This is evidence about the common first-three-stage/64-dimensional
+memory recipe, not a best-tuned ConvNeXt or every modern encoder. The declared
+56x56 grid loses 73 clean VisA and one KSDD2 positive masks; their image detection
+results remain included. See [M11 comparison](../reports/M11_ENCODER_COMPARISON.md).
+The normal fit cap/grid differ from historical deployment studies, so these are
+matched-study results rather than changed M5/M10 production metrics.
+
 M10 optionally removes sub-16-pixel isolated components from the original VisA
 224x224 thresholded support, without changing continuous evidence or image
 decisions. Clean normal-image contour incidence drops from 78.17% to 73.43%,

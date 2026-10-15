@@ -1,0 +1,11 @@
+anomaly_images,condition,dataset,empty_anomaly_masks,test_images,visible_anomaly_masks
+1200,clean,visa,73,2162,1127
+1200,jpeg_severe,visa,73,2162,1127
+1200,blur_severe,visa,73,2162,1127
+1200,noise_severe,visa,73,2162,1127
+1200,geometric_severe,visa,82,2162,1118
+110,clean,ksdd2,1,1004,109
+110,jpeg_severe,ksdd2,1,1004,109
+110,blur_severe,ksdd2,1,1004,109
+110,noise_severe,ksdd2,1,1004,109
+110,geometric_severe,ksdd2,0,1004,110

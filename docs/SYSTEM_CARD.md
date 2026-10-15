@@ -102,6 +102,17 @@ quality artifact adds 48,424 bytes, bringing total runtime artifacts to
 
 ## Operational checklist
 
+M11 is an offline encoder comparison and does not change the deployed model,
+quality gate, thresholds, browser behavior, or report privacy. The matched VisA
+CPU benchmark measures 33.9 ms median for ResNet versus 54.1 ms for ConvNeXt;
+it includes dataset image/mask decoding and map smoothing, not browser rendering
+or quality gating, so it is not a replacement M10 application-latency figure.
+The full ConvNeXt checkpoint is 114,419,221 bytes and its executed three-stage
+encoder has 12,348,000 parameters versus ResNet's 2,782,784. The larger/slower
+substitution loses clean ranking/localization and is not automatically promoted.
+See [M11 results](../reports/M11_ENCODER_COMPARISON.md) and
+[manual verification](M11_MANUAL_TESTING.md).
+
 The optional M10 inspector retains these safety/privacy contracts and adds
 hash-verified small-region cleanup with region-count/policy/threshold metadata.
 Its 24-input CPU benchmark `m10-prototype-benchmark-20261014T113701Z` records

@@ -12,6 +12,13 @@ Public milestone reports:
 - [M8 capture-quality gate](M8_CAPTURE_QUALITY_GATE.md)
 - [M9 independent second-dataset validation](M9_EXTERNAL_VALIDATION.md)
 - [M10 thresholded localization](M10_LOCALIZATION.md)
+- [M11 modern encoder comparison](M11_ENCODER_COMPARISON.md)
+
+M11 aggregate category metrics, paired differences, macro intervals, resource
+measurements, mask visibility, severe operating trade-offs, and their exact
+source/output hashes are under [`m11/`](m11/). Rebuild with
+`scripts/build_m11_report.py` using `configs/reporting/m11.yaml`. This comparison
+does not replace the deployed ResNet inspector or rewrite historical M7 outputs.
 
 M10 aggregate tables and source/output hashes are under [`m10/`](m10/).
 Rebuild with `scripts/build_m10_report.py` using `configs/reporting/m10.yaml`.
