@@ -1,0 +1,45 @@
+experiment:
+  name: m13-small-defects
+  seed: 20260915
+  bootstrap_samples: 1000
+  confidence: 0.95
+datasets: [visa, ksdd2]
+model:
+  image_size: 224
+  canvas_size: 336
+  tile_size: 224
+  tile_stride: 112
+  blend_floor: 0.05
+  batch_size: 4
+  encoder_batch_size: 16
+  torch_threads: 4
+  fit_normals_cap: 128
+  bank_size: 512
+  projected_dimension: 64
+  candidate_limit: 4096
+  patch_budget_per_image: 24
+  image_score_fraction: 0.01
+  gaussian_sigma: 6.0
+calibration:
+  anomaly_alpha: 0.05
+  review_alpha: 0.20
+  pixel_quantile: 0.995
+evaluation:
+  coarse_grid: 56
+  small_region_fraction: 0.001
+  tiny_region_fraction: 0.0001
+  region_recall_threshold: 0.10
+sources:
+  visa_config: configs/data/visa.yaml
+  ksdd2_config: configs/data/ksdd2.yaml
+  robustness_config: configs/experiments/m4-robustness.yaml
+conditions: [clean, blur_severe, noise_severe]
+benchmark:
+  normal_samples: 3
+  anomaly_samples: 3
+quick:
+  train_normals: 24
+  calibration_normals: 50
+  test_normals: 12
+  test_anomalies: 12
+  bootstrap_samples: 50

@@ -28,7 +28,7 @@ root-cause diagnostic. It must not autonomously release or reject products.
 - Training: official one-class training normals only.
 - Calibration: deterministic per-category validation normals derived only from
   training-normal rows; 68–136 images per category and 1,301 total.
-- Evaluation: untouched official test partition, 962 normal and 1,200 anomalous
+- Evaluation: preserved official test partition, 962 normal and 1,200 anomalous
   images across 12 categories.
 - Leakage controls: exact and perceptual cross-split duplicate rejection through
   the trusted M1 manifest.
@@ -124,8 +124,33 @@ serving. The authoritative anomaly calibration run is
 `m5-calibration-full-20260920T110316Z`. See `reports/M5_CALIBRATION.md` for the
 full operating analysis.
 
+The optional M12 comparison uses schema-2 capture references: the eight original
+measurements plus contrast-normalized log focus and low-structure noise proxies.
+Its alpha remains .02 and all references/calibration are normal-only. The
+historical M8/M10 gate is unchanged; this is not an automatic deployment upgrade
+or a change to detector weights/thresholds. Read the complete
+[gate trade-offs](../reports/M12_QUALITY_GENERALIZATION.md), especially defect
+deferral, clean recapture, and operator burden, before choosing a configuration.
+This follow-up uses known benchmarks and is exploratory, not untouched capture
+confirmation. Recapture never means that a defect was successfully detected.
+
 The M10 configuration also verifies the source M5 identity, summary, every
 category localization profile hash, memory identity, manifest, and center-crop
 geometry before serving. The evaluated support function is shared with live
 contours and flagged-area reporting. M6/M8 configurations preserve their
 historical contour behavior.
+
+M13 is a separate small-defect resolution/tiling study, not a deployment change.
+It compares common-grid measurement effects with actual four-view detail under
+matched normal-memory budgets and independent normal-only calibration. Fine
+positive-coverage masks avoid silently dropping coarse-grid-lost defects but
+can expand subpixel boundaries. Preserving annotation visibility does not add
+encoder information or establish physical defect precision. Region hits must
+be read alongside image/foreground overlap, false positives and compute cost.
+See the [complete study](../reports/M13_SMALL_DEFECT_LOCALIZATION.md); the live
+M10 model, gate and thresholds remain unchanged.
+
+Clean tiling overlap gains do not establish reliable tiny-defect improvement:
+the VisA small-image IoU interval spans zero, tiny-region hit rate declines,
+and KSDD2 has only one small-defect image. Severe-noise false positives and
+single-image cost increase substantially. Keep the current deployment default.

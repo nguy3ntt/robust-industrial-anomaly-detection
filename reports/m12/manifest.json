@@ -1,0 +1,15 @@
+{
+  "output_hashes": {
+    "reports/M12_QUALITY_GENERALIZATION.md": "2067cf255d2f06d0fea696e5bb3dffa183bb048099630bef61f0c25d5e1a5989",
+    "reports/m12/category_metrics.csv": "3cd4cac8eac8521d055967e5517d674e0194296d6add086f057b667e4643ec45",
+    "reports/m12/resources.csv": "2b4dc26e947cc6045b66e4ef8124f90711e514c0791273df06f2ee054b9fc596",
+    "reports/m12/summary.csv": "29838b1f64597f11e3726bc241395730bf91c3a077df22ac7da6dc74682f6714"
+  },
+  "package_sha256": "263b970acd02458ae2495bf0916a3199bc0fc6d8b39e53f4cdf692ffe996c3a9",
+  "per_image_predictions_published": false,
+  "schema_version": 1,
+  "source_images_published": false,
+  "source_metadata_sha256": "b166278d3ad272477dd06a8e477e331952689d2c14baf26cc7519ea59de402c1",
+  "source_run": "m12-quality-generalization-full-20261016T062055Z",
+  "weights_published": false
+}

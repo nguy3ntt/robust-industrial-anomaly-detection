@@ -14,6 +14,13 @@ quality or distribution shift.
 
 ## Architecture and data flow
 
+The recommended entry point is `start-inspector.ps1`, backed by
+`scripts/run_inspector.py`. It verifies local weights and model references,
+fails clearly on occupied ports, binds only IPv4 loopback, and never kills an
+existing service or chooses a fallback model. The runtime constructs the
+backbone from verified local weights without a downloader path; historical
+feature values are unchanged. See [startup/recovery](STARTUP.md).
+
 1. A standard-library HTTP server binds to `127.0.0.1` by default.
 2. The browser sends each selected image as a bounded raw request.
 3. The server decodes the image in memory, applies EXIF orientation, and uses the
@@ -34,6 +41,17 @@ Inference is serialized behind a model lock because the HTTP layer is threaded.
 The backbone remains resident and category memories are cached after first use.
 
 ## Privacy and security properties
+
+The optional [fresh-capture pilot](FRESH_CAPTURE_STUDY.md) is a separate
+local workflow, not browser upload storage. Its intentionally retained source
+photographs, session/object metadata and checkpointed predictions live in an
+ignored/private study directory. It locks model artifacts, calibration, code,
+installed versions and development membership before final collection, then
+records first holdout opening and permits exact verified resume only. Local
+hashes/owner attestations are not access control or independent provenance
+certification. No fresh captures have been supplied or evaluated yet. The
+workflow is for matching deployed product references, not new-category training
+or mask-based localization validation, and makes no automatic public export.
 
 - Loopback binding is enforced; non-loopback hosts are rejected.
 - Uploaded image bytes and rendered previews are held only in memory.
@@ -121,6 +139,30 @@ evaluations, four recaptures). Localization time is included in rendering/total
 time. Profiles add 4,018,719 bytes; total runtime artifacts are 54,033,458 bytes.
 These mixed-path measurements do not establish a speed gain over older runs.
 See the [manual verification guide](M10_MANUAL_TESTING.md).
+
+M12 provides a separately configured schema-2 quality-gate comparison on port
+8767. The ResNet detector, anomaly calibration, contour policy, loopback/upload
+limits, and image-free export remain unchanged. Runtime health and exported
+metadata identify `quality_schema_version` and the source quality run. Rejected
+v2 captures still skip all neural inference and remain unresolved. Historical
+M8/M10 configurations retain schema 1; no existing server is silently restarted
+or replaced. KSDD2 remains research-only rather than a browser category.
+The [M12 evidence](../reports/M12_QUALITY_GENERALIZATION.md) reports gate-only
+offline timings and both gains/regressions; those timings do not replace the
+historical end-to-end application benchmarks. Use the
+[M12 manual guide](M12_MANUAL_TESTING.md) to compare both profiles locally.
+
+M13 runs a separate, local-only controlled resolution/tiling evaluation. Its
+four-view input geometry, common-map image-score aggregation, normal references
+and calibration differ from the current browser deployment; generated panels
+must not be uploaded as substitutes for source inputs. No existing server is
+restarted or automatically promoted. The panel generator verifies its displayed
+binary support/IoU against committed measured outputs, with source labels and
+model decisions shown separately. Dataset images and per-image evidence remain
+in ignored local artifacts; public reports contain aggregates only. Read the
+[M13 manual guide](M13_MANUAL_TESTING.md) and [results](../reports/M13_SMALL_DEFECT_LOCALIZATION.md)
+before interpreting any fine-looking contour or small-region hit as an accuracy
+gain. Offline timings are not a new browser/end-to-end benchmark.
 
 - Keep `.env`, dataset, model artifacts, and reports on approved local storage.
 - Start on the default loopback address.

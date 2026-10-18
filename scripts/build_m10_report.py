@@ -54,9 +54,9 @@ def main() -> int:
         "all_image_iou",
         "background_pixel_fpr",
     )
-    macros = []
+    macros: list[dict[str, Any]] = []
     for (dataset, condition, policy), group in sorted(groups.items()):
-        macro = {
+        macro: dict[str, Any] = {
             "dataset": dataset,
             "condition": condition,
             "policy": policy,

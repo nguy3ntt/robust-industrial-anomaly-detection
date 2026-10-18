@@ -35,7 +35,25 @@ FEATURE_LABELS = {
     "blockiness": "compression artifacts",
     "edge_centroid_x": "horizontal framing",
     "edge_centroid_y": "vertical framing",
+    "log_focus_ratio": "contrast-normalized focus",
+    "log_flat_noise": "flat-region noise",
 }
+
+V2_FEATURE_DIRECTIONS: dict[str, QualityDirection] = {
+    **FEATURE_DIRECTIONS,
+    "log_focus_ratio": "lower",
+    "log_flat_noise": "upper",
+}
+
+
+def feature_directions(schema_version: int) -> Mapping[str, QualityDirection]:
+    """Keep historical measurements immutable and reject unknown recipes."""
+
+    if schema_version == 1:
+        return FEATURE_DIRECTIONS
+    if schema_version == 2:
+        return V2_FEATURE_DIRECTIONS
+    raise QualityGateError("quality model has an unsupported schema")
 
 
 class QualityGateError(ValueError):
@@ -157,6 +175,39 @@ def capture_metrics(image: np.ndarray) -> CaptureMetrics:
     )
 
 
+def capture_measurements(image: np.ndarray, *, schema_version: int = 1) -> dict[str, float]:
+    """Versioned focus/noise proxies, always on the exact anomaly-model input.
+
+    V2 adds log fine/coarse energy (insensitive to multiplicative contrast) and
+    a robust diagonal high-pass noise estimate on the least structured quarter
+    of pixels. Logs avoid the bounded lower-tail deviation of raw sharpness.
+    Neither proxy identifies physical camera faults or separates every defect.
+    """
+
+    feature_directions(schema_version)
+    values = capture_metrics(image).values()
+    if schema_version == 1:
+        return values
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0
+    laplacian = cv2.Laplacian(gray, cv2.CV_32F, ksize=3)
+    dx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    dy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    energy = float(np.mean(dx * dx + dy * dy))
+    values["log_focus_ratio"] = float(
+        np.log(float(np.mean(laplacian * laplacian)) / max(energy, 1e-8) + 1e-8)
+    )
+    smooth = cv2.GaussianBlur(gray, (0, 0), sigmaX=2.0)
+    sx = cv2.Sobel(smooth, cv2.CV_32F, 1, 0, ksize=3)
+    sy = cv2.Sobel(smooth, cv2.CV_32F, 0, 1, ksize=3)
+    structure = (sx * sx + sy * sy)[1:-1, 1:-1]
+    flat = structure <= np.quantile(structure, 0.25)
+    kernel = np.asarray([[1, -1], [-1, 1]], dtype=np.float32) / 2.0
+    residual = cv2.filter2D(gray, cv2.CV_32F, kernel)[1:-1, 1:-1]
+    noise = float(np.median(np.abs(residual[flat]))) / 0.67449
+    values["log_flat_noise"] = float(np.log(noise / max(float(np.std(gray)), 1e-4) + 1e-6))
+    return values
+
+
 def _robust_location_scale(values: np.ndarray) -> tuple[float, float]:
     center = float(np.median(values))
     mad_scale = 1.4826 * float(np.median(np.abs(values - center)))
@@ -170,16 +221,19 @@ def quality_components(
     metrics: CaptureMetrics | Mapping[str, float],
     center: Mapping[str, float],
     scale: Mapping[str, float],
+    *,
+    schema_version: int = 1,
 ) -> dict[str, float]:
     """Convert raw measurements into directional robust deviations."""
 
     values = metrics.values() if isinstance(metrics, CaptureMetrics) else metrics
-    if set(values) != set(FEATURE_DIRECTIONS):
+    directions = feature_directions(schema_version)
+    if set(values) != set(directions):
         raise QualityGateError("quality metrics do not match the model feature schema")
     if set(center) != set(values) or set(scale) != set(values):
         raise QualityGateError("quality reference does not match the feature schema")
     result: dict[str, float] = {}
-    for name, direction in FEATURE_DIRECTIONS.items():
+    for name, direction in directions.items():
         observed = float(values[name])
         reference_center = float(center[name])
         denominator = float(scale[name])
@@ -199,8 +253,10 @@ def quality_components(
 
 
 def fit_category_quality_model(
-    fit_metrics: Sequence[CaptureMetrics],
-    calibration_metrics: Sequence[CaptureMetrics],
+    fit_metrics: Sequence[CaptureMetrics | Mapping[str, float]],
+    calibration_metrics: Sequence[CaptureMetrics | Mapping[str, float]],
+    *,
+    schema_version: int = 1,
 ) -> CategoryQualityModel:
     """Fit robust train-normal references and validation-normal gate scores."""
 
@@ -208,14 +264,23 @@ def fit_category_quality_model(
         raise QualityGateError(
             "quality calibration requires at least 16 fit and 16 calibration samples"
         )
-    fit_values = [metrics.values() for metrics in fit_metrics]
+    directions = feature_directions(schema_version)
+    fit_values = [
+        metrics.values() if isinstance(metrics, CaptureMetrics) else metrics
+        for metrics in fit_metrics
+    ]
+    if any(set(row) != set(directions) for row in fit_values):
+        raise QualityGateError("quality fitting metrics do not match the feature schema")
     center: dict[str, float] = {}
     scale: dict[str, float] = {}
-    for name in FEATURE_DIRECTIONS:
+    for name in directions:
         values = np.asarray([row[name] for row in fit_values], dtype=np.float64)
+        if not np.all(np.isfinite(values)):
+            raise QualityGateError("quality fitting measurements must be finite")
         center[name], scale[name] = _robust_location_scale(values)
     calibration_scores = tuple(
-        max(quality_components(metrics, center, scale).values()) for metrics in calibration_metrics
+        max(quality_components(metrics, center, scale, schema_version=schema_version).values())
+        for metrics in calibration_metrics
     )
     return CategoryQualityModel(
         center=center,
@@ -237,8 +302,13 @@ def evaluate_capture_quality(
     reference = model.categories.get(category)
     if reference is None:
         raise QualityGateError(f"quality model has no category {category!r}")
-    metrics = capture_metrics(image)
-    components = quality_components(metrics, reference.center, reference.scale)
+    image = _validate_rgb(image)
+    if image.shape[:2] != (model.image_size, model.image_size):
+        raise QualityGateError("capture-quality input geometry does not match the fitted model")
+    metrics = capture_measurements(image, schema_version=model.schema_version)
+    components = quality_components(
+        metrics, reference.center, reference.scale, schema_version=model.schema_version
+    )
     score = max(components.values())
     calibration = np.asarray(reference.calibration_scores, dtype=np.float64)
     p_value = float(conformal_p_values(calibration, [score])[0])
@@ -250,7 +320,7 @@ def evaluate_capture_quality(
         p_value=p_value,
         score=score,
         alpha=model.alpha,
-        metrics=metrics.values(),
+        metrics=metrics,
         components=components,
         contributors=contributors,
         calibration_samples=reference.calibration_samples,
@@ -265,7 +335,7 @@ def quality_model_dict(model: CaptureQualityModel) -> dict[str, object]:
         "image_size": model.image_size,
         "alpha": model.alpha,
         "manifest_sha256": model.manifest_sha256,
-        "feature_directions": FEATURE_DIRECTIONS,
+        "feature_directions": dict(feature_directions(model.schema_version)),
         "categories": {
             category: {
                 "center": dict(reference.center),
@@ -286,9 +356,11 @@ def load_quality_model(path: Path) -> CaptureQualityModel:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise QualityGateError(f"cannot load quality model {path}: {exc}") from exc
-    if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+    if not isinstance(payload, dict) or type(payload.get("schema_version")) is not int:
         raise QualityGateError("quality model has an unsupported schema")
-    if payload.get("feature_directions") != FEATURE_DIRECTIONS:
+    version = payload["schema_version"]
+    directions = feature_directions(version)
+    if payload.get("feature_directions") != directions:
         raise QualityGateError("quality model feature directions have changed")
     image_size = payload.get("image_size")
     alpha = payload.get("alpha")
@@ -321,9 +393,9 @@ def load_quality_model(path: Path) -> CaptureQualityModel:
             or not isinstance(scores, list)
         ):
             raise QualityGateError(f"quality model category {category} is incomplete")
-        if not isinstance(fit_samples, int) or not isinstance(calibration_samples, int):
+        if type(fit_samples) is not int or type(calibration_samples) is not int:
             raise QualityGateError(f"quality model category {category} counts are invalid")
-        if set(center) != set(FEATURE_DIRECTIONS) or set(scale) != set(FEATURE_DIRECTIONS):
+        if set(center) != set(directions) or set(scale) != set(directions):
             raise QualityGateError(f"quality model category {category} features are invalid")
         try:
             reference = CategoryQualityModel(
@@ -344,21 +416,26 @@ def load_quality_model(path: Path) -> CaptureQualityModel:
                 f"quality model category {category} contains non-numeric values"
             ) from exc
         quality_components(
-            {name: float(reference.center[name]) for name in FEATURE_DIRECTIONS},
+            {name: float(reference.center[name]) for name in directions},
             reference.center,
             reference.scale,
+            schema_version=version,
         )
         if len(reference.calibration_scores) != reference.calibration_samples:
             raise QualityGateError(f"quality model category {category} score count is invalid")
-        if not reference.calibration_scores or not np.all(
-            np.isfinite(reference.calibration_scores)
+        if (
+            not reference.calibration_scores
+            or not np.all(np.isfinite(reference.calibration_scores))
+            or min(reference.calibration_scores) < 0
         ):
             raise QualityGateError(f"quality model category {category} scores are invalid")
         if reference.fit_samples < 16 or reference.calibration_samples < 16:
             raise QualityGateError(f"quality model category {category} has too few samples")
+        if version == 2 and 1.0 / (reference.calibration_samples + 1) > float(alpha):
+            raise QualityGateError("v2 quality calibration cannot resolve the declared alpha")
         categories[category] = reference
     return CaptureQualityModel(
-        schema_version=1,
+        schema_version=version,
         image_size=image_size,
         alpha=float(alpha),
         manifest_sha256=manifest_sha256,

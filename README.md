@@ -20,6 +20,26 @@ Given an inspection image, the completed prototype will provide:
 This is an inspection decision-support system. It is not a certified quality
 control device and it does not diagnose the physical root cause of a defect.
 
+## Start the local inspector
+
+From this repository in PowerShell:
+
+```powershell
+.\start-inspector.ps1
+```
+
+This is the recommended launch path: the existing M10 inspector, original M8
+capture gate, CPU, and `http://127.0.0.1:8765`. It opens the browser after
+verified startup. Keep the terminal open and use Ctrl+C to stop your instance.
+Use `-Check` to verify readiness without serving, or `-Port 8770` if another
+program occupies 8765. No automatic downloads, training, process termination,
+threshold changes or fallback models occur. A fresh Git checkout still needs
+the environment and locally generated model/calibration artifacts.
+
+See [startup and recovery](docs/STARTUP.md) for setup, missing-file messages,
+alternative shells, and manual checks. The older milestone-specific launch
+commands below remain historical reproduction/comparison paths.
+
 ## Research questions
 
 1. Which pretrained feature representations produce the strongest normal-only
@@ -272,7 +292,7 @@ noise, JPEG, and geometry produce normal FPR 0.8686, 0.6820, 0.4696, and 0.2179.
 See the [M5 calibration report](reports/M5_CALIBRATION.md) for category behavior,
 coverage-risk definitions, exchangeability assumptions, and failure modes.
 
-## Run the M6 local inspector
+## Reproduce the historical M6 local inspector
 
 The practical prototype serves a self-contained browser interface on loopback.
 Images are decoded and inspected in memory; the application does not retain
@@ -303,7 +323,7 @@ See the [M6 prototype report](reports/M6_PROTOTYPE.md),
 [model card](docs/MODEL_CARD.md), and [system card](docs/SYSTEM_CARD.md) for the
 runtime design, benchmark, privacy controls, intended use, and deployment limits.
 
-## Run the capture-quality-gated inspector
+## Reproduce the historical M8 capture-quality-gated inspector
 
 M8 adds a category-conditional, normal-only capture gate in front of the frozen
 M6 pipeline. The gate measures illumination, contrast, focus, noise, exposure
@@ -382,7 +402,7 @@ unchanged. The overlay and reported flagged area use the same evaluated binary
 support. Historical M6/M8 configurations retain their original contour policy.
 
 ```powershell
-# Start the quality-gated inspector with cleaned contours.
+# Historical explicit M10 entry point; prefer start-inspector.ps1 for normal use.
 .venv\Scripts\python.exe scripts/run_m10_prototype.py --port 8766
 ```
 
@@ -439,6 +459,113 @@ including per-category losses/gains, intervals, mask-visibility limits, and cost
 Rebuild its aggregate evidence with `scripts/build_m11_report.py`; the exact
 completed source is pinned in `configs/reporting/m11.yaml`.
 
+## Capture-quality generalization comparison
+
+M12 compares the historical capture gate with a versioned revision adding
+contrast-normalized focus and low-structure noise measurements. It fits and
+calibrates only on the existing clean normals, preserves all official tests,
+and reuses the exact verified anomaly decisions. No backbone retraining, new
+dataset account, dependency, or download is required on the configured machine.
+
+```powershell
+# Verify the workflow, including all categories/domains and frozen shifts.
+.venv\Scripts\python.exe scripts/run_m12_quality_generalization.py --quick
+
+# Complete all original fit/calibration normals and all 3,166 test images.
+.venv\Scripts\python.exe scripts/run_m12_quality_generalization.py
+
+# Create five ignored local examples, then start the separate v2 inspector.
+.venv\Scripts\python.exe scripts/prepare_m12_manual_examples.py
+.venv\Scripts\python.exe scripts/run_m12_prototype.py --open-browser
+```
+
+The comparison inspector uses port 8767, the same ResNet detector and cleaned
+contours, and explicit quality schema 2 in health/export metadata. Historical
+M8/M10 configurations retain schema 1. This is an exploratory comparison on
+known benchmarks, not automatic model promotion or fresh capture confirmation.
+The full study raises shifted false-alert interception from 93.22% to 94.80%
+on VisA and only 21.90% to 22.50% on KSDD2. Clean-normal recapture is 2.08% and
+1.45%, respectively; VisA clean-defect deferral rises slightly. The main KSDD2
+blur/noise weakness remains unresolved, so the historical default is retained.
+More intercepted alerts can mean more recaptures and deferred defects, so use
+the [complete gate report](reports/M12_QUALITY_GENERALIZATION.md),
+[frozen protocol](docs/M12_QUALITY_PROTOCOL.md), and
+[manual checks](docs/M12_MANUAL_TESTING.md) together. Resume an interrupted run
+with `--resume <printed-run-directory>` and unchanged code/config; each completed
+condition is hash-verified before reuse. Rebuild aggregate public evidence with
+`scripts/build_m12_report.py`; images and per-image/model artifacts stay out of Git.
+
+## Small-defect resolution and overlapping tiles
+
+M13 separates evaluation resolution from actual encoder detail. `global56`
+and `global336` share the same global inference, image scores and decisions;
+`tiled336` uses four overlapping 224-pixel views on a common 336 canvas. All
+primary spatial metrics use the same conservative fine mask, so a tiny positive
+lost on the coarse grid is not silently excluded. Upsampling alone is not a
+feature improvement. Both models receive the same normal fit/calibration IDs,
+512-entry memory and 24 patches per original capture across all views.
+
+```powershell
+# Small real-data workflow check.
+.venv\Scripts\python.exe scripts/run_m13_small_defects.py --quick --dataset visa --category candle
+
+# Full two-domain clean/severe-blur/severe-noise comparison (CPU).
+.venv\Scripts\python.exe scripts/run_m13_small_defects.py
+
+# Inspect measured local panels without another inference/training run.
+.venv\Scripts\python.exe scripts/prepare_m13_manual_examples.py --dataset visa --category candle
+.venv\Scripts\python.exe scripts/prepare_m13_manual_examples.py --dataset ksdd2
+```
+
+The fixed fit cap is 128 normals/category, with all existing calibration normals
+and all official tests. This new matched-budget study is not a reproduction of
+historical M5/M9/M10/M11 scores. It reports tiny/small-region overlap and recall,
+false positives, normal contour incidence, paired image-clustered comparisons,
+and single-image cost. No quality gate or component cleanup hides failures.
+Other capture threats and independent physical capture sessions remain outside
+this follow-up. Existing browser inspectors and their thresholds are unchanged.
+
+The full study covers 3,166 official test images and 28,494 predictions.
+Tiling improves clean foreground IoU: VisA 0.1338 -> 0.1519 and KSDD2
+0.2922 -> 0.3238. VisA small-image IoU rises 0.0285 -> 0.0356, but its paired
+interval includes zero and tiny-region hit rate falls. KSDD2 has only one
+small-defect image. Severe-noise normal-image FPR increases by 47.59 percentage
+points on VisA and 79.19 on KSDD2; clean single-image median cost rises
+40.1 -> 97.9 ms and 24.1 -> 88.4 ms respectively. This is useful controlled
+evidence, not an unqualified upgrade; retain the evaluated live default.
+
+Read the [small-defect report](reports/M13_SMALL_DEFECT_LOCALIZATION.md),
+[fixed protocol](docs/M13_SMALL_DEFECT_PROTOCOL.md), and
+[manual checks](docs/M13_MANUAL_TESTING.md). Public artifacts are aggregate-only;
+generated comparison images, private predictions and fitted memories stay out
+of Git. Runs resume with `--resume <printed-directory>` and unchanged inputs.
+Rebuild the exact pinned public evidence with `scripts/build_m13_report.py`.
+
+## Fresh physical capture study
+
+The collection/audit/freeze/evaluation workflow is prepared, but **no fresh
+photographs have been supplied and no fresh-capture accuracy result exists**.
+The empty local template is under `artifacts/capture-studies/fresh-capture-pilot/`
+on this workstation. Start with [the collection guide](docs/FRESH_CAPTURE_STUDY.md).
+
+The pilot reserves physical objects/sessions for final evaluation, checks
+duplicate leakage and metadata, freezes the existing model/calibration/code,
+then requires real final captures after that freeze. Evaluation retains
+recaptures and failures in its denominators, reports camera/lighting/session
+groups, and supports verified exact resume. No images are uploaded or published.
+This is a capture-transfer study for a matching supported product, not automatic
+normal-reference adaptation to arbitrary new objects or a mask-based localization
+study. Do not feed unrelated objects to a VisA category and call it validation.
+
+```powershell
+# Inspect the initialized template; it correctly refuses an empty collection.
+.venv\Scripts\python.exe scripts/capture_study.py audit
+```
+
+The guide covers initialization elsewhere, the camera/lighting/session plan,
+product/domain selection, model freeze and eventual holdout unlock. Do not
+collect or inspect final evaluation photos until the protocol/runtime is frozen.
+
 ## Final academic and portfolio package
 
 M7 reconstructs the public evidence from hash-pinned completed M2–M6 runs. It
@@ -465,7 +592,11 @@ and [caption-led demo](output/video/robust-industrial-anomaly-detection-demo.mp4
 
 ## Status
 
-M0 through M11 are complete. The official VisA archive was downloaded directly,
+M0 through M13 are complete, including the exploratory gate comparison,
+full-CI type repair, and controlled small-defect resolution/tiling study.
+The unified startup path is verified; the fresh-capture workflow is prepared
+and actual evaluation remains pending real photographs.
+The official VisA archive was downloaded directly,
 verified against SHA-256, extracted through a traversal-safe atomic process,
 and audited across all 10,821 samples. The canonical manifest preserves the
 official test set and derives validation only from grouped training-normal

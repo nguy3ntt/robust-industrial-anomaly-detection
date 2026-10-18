@@ -1,6 +1,6 @@
 # Reports
 
-This directory will contain small public figures, tables, and final written
+This directory contains small public figures, tables, and final written
 outputs. Do not place raw dataset images, private inspection samples, model
 weights, feature banks, or machine-specific run directories here.
 
@@ -13,6 +13,19 @@ Public milestone reports:
 - [M9 independent second-dataset validation](M9_EXTERNAL_VALIDATION.md)
 - [M10 thresholded localization](M10_LOCALIZATION.md)
 - [M11 modern encoder comparison](M11_ENCODER_COMPARISON.md)
+- [M12 capture-quality generalization](M12_QUALITY_GENERALIZATION.md)
+- [M13 small-defect resolution and tiling](M13_SMALL_DEFECT_LOCALIZATION.md)
+
+M13 compares coarse/fine readout and overlapping detail tiles using common fine
+ground truth and matched normal-memory budgets. Aggregate overlap, region-size,
+false-positive, paired-difference and resource tables are under [`m13/`](m13/).
+Rebuild with `scripts/build_m13_report.py`; licensed comparison images and private
+per-image evidence remain in ignored local artifacts. Fine display resolution
+is not itself additional encoder information or physical defect precision.
+
+M12 aggregate gate trade-offs and exact source/output pins are under
+[`m12/`](m12/). Its modest improvements do not resolve the cross-domain gate
+weakness or automatically replace the historical inspector.
 
 M11 aggregate category metrics, paired differences, macro intervals, resource
 measurements, mask visibility, severe operating trade-offs, and their exact

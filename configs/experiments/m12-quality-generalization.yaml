@@ -1,0 +1,23 @@
+experiment:
+  name: m12-quality-generalization
+  seed: 20260915
+quality_gate:
+  schema_version: 2
+  image_size: 224
+  alpha: 0.02
+source_protocol: configs/experiments/m8-quality-gate.yaml
+sources:
+  m5:
+    run: m5-calibration-full-20260920T110316Z
+    metadata_sha256: 5936b8d06771e58036e1db01913c5e6e2e8da603ceab402a8c128125ec52b22f
+  m8:
+    run: m8-quality-gate-full-20261013T034123Z
+    metadata_sha256: 42cb6b26cdb279be762e0720560457a26fceb7a43ac86d65abfa49756deefa97
+  m9:
+    run: m9-ksdd2-validation-full-20261013T045835Z
+    metadata_sha256: f9be5407a170eb354e1398d8cc4922804f5a84ac0d00b3e40016f5a6875b512d
+quick:
+  train_normals: 32
+  calibration_normals: 50
+  test_normals: 12
+  test_anomalies: 12

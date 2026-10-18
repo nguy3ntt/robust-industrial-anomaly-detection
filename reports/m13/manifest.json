@@ -1,0 +1,20 @@
+{
+  "output_hashes": {
+    "reports/M13_SMALL_DEFECT_LOCALIZATION.md": "613e00ed6276c12f211d9592aa08f87099d9aeca627a5550ff3b693f860a9a62",
+    "reports/m13/category_comparisons.csv": "4afb3bc14af5a014a2ed31639bfd61b286752e5427adb1520aa1d33a5586d6ba",
+    "reports/m13/category_metrics.csv": "8f7d00b035aaaeae0695cda60210d332018c670fb1b273d98c08e9c68f6ccd7b",
+    "reports/m13/category_regions.csv": "abc7773892e3865b3eda7451b9ef205d4d57448748b1790df9a7142f9b8c5f8a",
+    "reports/m13/category_resources.csv": "d4c0e782b83e1940ca846ff25dd52cbac971b2ffa36e4fbbab2a168fd2d76cac",
+    "reports/m13/macro_deltas.csv": "10c0e986c5fc0f2f0ef935d431e596a9d2e272692fdf432e5e7ac9873c7deb70",
+    "reports/m13/macro_metrics.csv": "7614b73f3ea868c8d665b686e4d58554682d63c4abf97a09f541dece22ef1cc8",
+    "reports/m13/macro_regions.csv": "b1dab65ac20bd57216f43384cec85cb2df246be37bda7542cd95549bdbcb00d8",
+    "reports/m13/resources.csv": "28143b699216d76697d64293bc762d6bf70412ab539d256cb6084b3b37072922"
+  },
+  "package_sha256": "d7d814db35ba89ac5262b4c9248e454969833509876134955ad3b410856844d7",
+  "per_image_predictions_published": false,
+  "schema_version": 1,
+  "source_images_published": false,
+  "source_metadata_sha256": "e860e47eada45db7c0c09cc9a1f55c781bae9ad3913f22bc129cb41a11bcf360",
+  "source_run": "m13-small-defects-full-20261017T002537Z",
+  "weights_published": false
+}

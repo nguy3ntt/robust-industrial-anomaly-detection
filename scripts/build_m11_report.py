@@ -100,8 +100,8 @@ def verified_source(config: dict[str, Any]) -> Path:
 
 def build(config: dict[str, Any], project: Path) -> dict[str, str]:
     run = verified_source(config)
-    rows = _read_csv(run / "metrics.csv")
-    comparisons = _read_csv(run / "comparisons.csv")
+    rows: list[dict[str, Any]] = list(_read_csv(run / "metrics.csv"))
+    comparisons: list[dict[str, Any]] = list(_read_csv(run / "comparisons.csv"))
     benchmarks = _read_csv(run / "benchmarks.csv")
     conditions = ("clean", "jpeg_severe", "blur_severe", "noise_severe", "geometric_severe")
     visa_config = yaml.safe_load((project / "configs/data/visa.yaml").read_text("utf-8"))
@@ -132,24 +132,28 @@ def build(config: dict[str, Any], project: Path) -> dict[str, str]:
     groups: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         groups[(row["dataset"], row["condition"], row["encoder"])].append(row)
-    macros = []
+    macros: list[dict[str, Any]] = []
     for (dataset, condition, encoder), group in sorted(groups.items()):
-        values = {key: float(np.mean([float(row[key]) for row in group])) for key in METRICS}
+        means = {key: float(np.mean([float(row[key]) for row in group])) for key in METRICS}
         macros.append(
             {
                 "dataset": dataset,
                 "condition": condition,
                 "encoder": encoder,
                 "categories": len(group),
-                **values,
+                **means,
             }
         )
     paired: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in comparisons:
         paired[(row["dataset"], row["condition"])].append(row)
-    deltas = []
+    deltas: list[dict[str, Any]] = []
     for (dataset, condition), group in sorted(paired.items()):
-        result = {"dataset": dataset, "condition": condition, "categories": len(group)}
+        result: dict[str, Any] = {
+            "dataset": dataset,
+            "condition": condition,
+            "categories": len(group),
+        }
         for metric in DELTAS:
             key = f"{metric}_delta"
             values = np.asarray([float(row[key]) for row in group])
@@ -248,7 +252,7 @@ def build(config: dict[str, Any], project: Path) -> dict[str, str]:
     output = (project / config["output_directory"]).resolve()
     output.relative_to((project / "reports").resolve())
     output.mkdir(parents=True, exist_ok=True)
-    for filename, values in (
+    for filename, table in (
         ("category_metrics.csv", rows),
         ("paired_comparisons.csv", comparisons),
         ("macro_metrics.csv", macros),
@@ -257,7 +261,7 @@ def build(config: dict[str, Any], project: Path) -> dict[str, str]:
         ("mask_visibility.csv", visibility),
         ("severe_operating_summary.csv", severe_policy),
     ):
-        _atomic_csv(output / filename, json_ready(values))
+        _atomic_csv(output / filename, json_ready(table))
     index = {(row["dataset"], row["condition"], row["encoder"]): row for row in macros}
     delta_index = {(row["dataset"], row["condition"]): row for row in deltas}
     clean = []

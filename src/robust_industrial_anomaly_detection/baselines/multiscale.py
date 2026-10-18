@@ -47,9 +47,16 @@ class MemoryBuildStats:
 
 
 class _PyramidModule(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, checkpoint_path: Path | None = None) -> None:
         super().__init__()
-        backbone = resnet18(weights=ResNet18_Weights.DEFAULT)
+        if checkpoint_path is None:
+            backbone = resnet18(weights=ResNet18_Weights.DEFAULT)
+        else:
+            # A verified local-only runtime must never invoke a weight downloader.
+            backbone = resnet18(weights=None)
+            backbone.load_state_dict(
+                torch.load(checkpoint_path, map_location="cpu", weights_only=True), strict=True
+            )
         self.stem = nn.Sequential(
             backbone.conv1,
             backbone.bn1,
@@ -107,7 +114,14 @@ class FrozenPyramidResNet18:
     weights_id = "torchvision.ResNet18_Weights.IMAGENET1K_V1"
     weights_url = ResNet18_Weights.DEFAULT.url
 
-    def __init__(self, *, device: str, image_size: int = 224, batch_size: int = 16) -> None:
+    def __init__(
+        self,
+        *,
+        device: str,
+        image_size: int = 224,
+        batch_size: int = 16,
+        checkpoint_path: Path | None = None,
+    ) -> None:
         if image_size < 64 or image_size % 32:
             raise BaselineError("image_size must be at least 64 and divisible by 32")
         if batch_size < 1:
@@ -117,7 +131,7 @@ class FrozenPyramidResNet18:
         self.device = torch.device(device)
         self.image_size = image_size
         self.batch_size = batch_size
-        self.model = _PyramidModule().eval().to(self.device)
+        self.model = _PyramidModule(checkpoint_path).eval().to(self.device)
         for parameter in self.model.parameters():
             parameter.requires_grad_(False)
 

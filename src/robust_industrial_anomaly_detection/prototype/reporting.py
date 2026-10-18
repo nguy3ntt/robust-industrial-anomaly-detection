@@ -72,6 +72,7 @@ def build_inspection_report(
                 "review_alpha",
                 "quality_gate_enabled",
                 "quality_alpha",
+                "quality_schema_version",
                 "source_m5_run",
                 "source_quality_run",
                 "source_localization_run",

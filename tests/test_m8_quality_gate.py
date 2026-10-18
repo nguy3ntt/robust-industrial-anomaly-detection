@@ -18,6 +18,7 @@ from robust_industrial_anomaly_detection.prototype.quality import (
     CaptureQualityModel,
     CategoryQualityModel,
     QualityGateError,
+    capture_measurements,
     capture_metrics,
     evaluate_capture_quality,
     fit_category_quality_model,
@@ -98,8 +99,9 @@ def test_quality_model_loader_fails_closed_on_feature_schema_drift(tmp_path: Pat
         load_quality_model(path)
 
 
-def test_failed_quality_gate_skips_anomaly_inference() -> None:
-    reference_metrics = capture_metrics(_pattern()).values()
+@pytest.mark.parametrize("schema_version", [1, 2])
+def test_failed_quality_gate_skips_anomaly_inference(schema_version: int) -> None:
+    reference_metrics = capture_measurements(_pattern(), schema_version=schema_version)
     reference = CategoryQualityModel(
         center=reference_metrics,
         scale={name: 1e-5 for name in reference_metrics},
@@ -112,7 +114,7 @@ def test_failed_quality_gate_skips_anomaly_inference() -> None:
     engine.image_size = 64
     engine._localizations = {}
     engine.quality_model = CaptureQualityModel(
-        schema_version=1,
+        schema_version=schema_version,
         image_size=64,
         alpha=0.02,
         manifest_sha256="a" * 64,

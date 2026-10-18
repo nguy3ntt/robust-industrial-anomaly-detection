@@ -401,9 +401,6 @@ class InspectionEngine:
             )
             self._load_localization_contract()
 
-        self.extractor = FrozenPyramidResNet18(
-            device=device, image_size=self.image_size, batch_size=1
-        )
         checkpoint = (
             Path(os.environ.get("TORCH_HOME", Path.home() / ".cache" / "torch"))
             / "hub"
@@ -415,6 +412,12 @@ class InspectionEngine:
         ):
             raise PrototypeError("frozen backbone checkpoint failed integrity verification")
         self.checkpoint_path = checkpoint
+        self.extractor = FrozenPyramidResNet18(
+            device=device,
+            image_size=self.image_size,
+            batch_size=1,
+            checkpoint_path=checkpoint,
+        )
 
     def _load_localization_contract(self) -> None:
         if self.localization_run is None:
@@ -738,6 +741,9 @@ class InspectionEngine:
             "review_alpha": self.settings.review_alpha,
             "quality_gate_enabled": self.quality_model is not None,
             "quality_alpha": self.quality_model.alpha if self.quality_model is not None else None,
+            "quality_schema_version": (
+                self.quality_model.schema_version if self.quality_model is not None else None
+            ),
             "max_upload_bytes": self.settings.max_upload_bytes,
             "max_batch_files": self.settings.max_batch_files,
             "images_persisted": False,
@@ -750,6 +756,47 @@ class InspectionEngine:
             else None,
             "localization_policy": "raw_cleaned" if self._localizations else "baseline_global",
         }
+
+    def provenance_files(self) -> tuple[Path, ...]:
+        """Enumerate local runtime dependencies for a preregistered capture lock."""
+
+        paths = [
+            self.checkpoint_path,
+            *(
+                self.m5_run / name
+                for name in (
+                    "metadata.json",
+                    "summary.json",
+                    "calibration_scores.csv",
+                    "calibration_parameters.csv",
+                )
+            ),
+            *(
+                self.m4_run / name
+                for name in (
+                    "metadata.json",
+                    "resolved_config.yaml",
+                    "index_manifest.json",
+                    "category_metrics.csv",
+                )
+            ),
+            *self._index_paths.values(),
+        ]
+        if self.quality_run is not None:
+            paths.extend(
+                self.quality_run / name
+                for name in (
+                    "metadata.json",
+                    "quality_model.json",
+                )
+            )
+        if self.localization_run is not None:
+            paths.extend(self.localization_run / name for name in ("metadata.json", "summary.json"))
+            paths.extend(
+                self.localization_run / f"units/visa/{category}/localization.npz"
+                for category in self.categories
+            )
+        return tuple(sorted(set(path.resolve(strict=True) for path in paths)))
 
     def resource_footprint(self) -> dict[str, int]:
         """Return exact on-disk sizes of runtime model artifacts."""
