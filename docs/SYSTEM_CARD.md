@@ -21,6 +21,15 @@ existing service or chooses a fallback model. The runtime constructs the
 backbone from verified local weights without a downloader path; historical
 feature values are unchanged. See [startup/recovery](STARTUP.md).
 
+The [portable release](PUBLIC_DEMO_RELEASE.md) provides an alternative local
+initialization path using verified relative-path runtime references. It inherits
+the same inspection and server behavior rather than implementing a substitute
+model. A dependency-free verifier checks the manifest; explicit `--prepare`
+may fetch the official hash-pinned checkpoint, which is not distributed inside
+the archive. Normal startup never downloads or retrains. No release is uploaded
+or exposed as a public hosted service automatically. Its stored VisA-derived
+normal references are distinct from uploads, which remain transient in memory.
+
 1. A standard-library HTTP server binds to `127.0.0.1` by default.
 2. The browser sends each selected image as a bounded raw request.
 3. The server decodes the image in memory, applies EXIF orientation, and uses the

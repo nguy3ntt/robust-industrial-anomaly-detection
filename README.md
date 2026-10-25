@@ -40,6 +40,27 @@ See [startup and recovery](docs/STARTUP.md) for setup, missing-file messages,
 alternative shells, and manual checks. The older milestone-specific launch
 commands below remain historical reproduction/comparison paths.
 
+### Portable demo for external reviewers
+
+A separate small release candidate packages the original M10/M8 CPU runtime
+without requiring your research drive, dataset or experiment history. It
+contains numeric VisA normal references, aggregate reports, attribution and
+per-file checksums; no source images, test predictions, private IDs, `.env` or
+pretrained weights are included. See [portable release setup](docs/PUBLIC_DEMO_RELEASE.md).
+
+Inside an extracted release, a reviewer with Python 3.12 and uv 0.12.13 can run:
+
+```powershell
+uv run --locked --extra cpu --no-dev python demo.py --prepare --open-browser
+```
+
+This explicitly prepares dependencies and the separately licensed official
+checkpoint; normal launches omit `--prepare`. An existing verified checkpoint
+can be supplied instead. No AWS/cloud account or training is needed. The ZIP
+is prepared locally under ignored `artifacts/releases/`, not automatically
+uploaded or hosted. Maintainers build it with `scripts/build_demo_release.py`;
+the full research checkout still uses `start-inspector.ps1` above.
+
 ## Research questions
 
 1. Which pretrained feature representations produce the strongest normal-only
@@ -596,6 +617,8 @@ M0 through M13 are complete, including the exploratory gate comparison,
 full-CI type repair, and controlled small-defect resolution/tiling study.
 The unified startup path is verified; the fresh-capture workflow is prepared
 and actual evaluation remains pending real photographs.
+Portable runtime packaging is available separately; it preserves the existing
+model and its limitations rather than claiming a new accuracy improvement.
 The official VisA archive was downloaded directly,
 verified against SHA-256, extracted through a traversal-safe atomic process,
 and audited across all 10,821 samples. The canonical manifest preserves the

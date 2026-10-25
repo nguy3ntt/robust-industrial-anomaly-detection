@@ -154,3 +154,11 @@ Clean tiling overlap gains do not establish reliable tiny-defect improvement:
 the VisA small-image IoU interval spans zero, tiny-region hit rate declines,
 and KSDD2 has only one small-defect image. Severe-noise false positives and
 single-image cost increase substantially. Keep the current deployment default.
+
+The optional [portable release](PUBLIC_DEMO_RELEASE.md) repacks only the original
+M10/M8 VisA runtime references and does not change inference or thresholds.
+Source images, sample IDs, test predictions and pretrained weights are excluded;
+normal-derived features/calibration references are included with attribution.
+The external checkpoint remains subject to its own terms. Packaging parity is
+not additional accuracy evidence, fresh-capture validation or a privacy guarantee
+for arbitrary feature memories. See [distribution notices](DEMO_THIRD_PARTY_NOTICES.md).

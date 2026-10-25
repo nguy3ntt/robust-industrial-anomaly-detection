@@ -1,5 +1,11 @@
 # Start the local inspector
 
+This guide is for the full research checkout with existing local artifacts.
+For reviewers without those artifacts, use the standalone
+[portable release](PUBLIC_DEMO_RELEASE.md), which needs neither `.env` nor the
+historical experiment tree. Its explicit first-use setup and licence boundaries
+are documented separately; no cloud deployment is required.
+
 From the repository root in PowerShell, use this recommended path:
 
 ```powershell
